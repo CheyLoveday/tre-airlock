@@ -19,22 +19,20 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-      - run: uv sync --extra dev --extra kernels
-      - name: Gate (ruff + pytest must pass before any release)
-        run: |
-          uv run ruff check
-          uv run pytest
-      # F4: the formal release gate is part of the release assurance story, so a tag must not
-      # publish unless the Lean checker builds and Python==Lean conformance holds (inlined here
-      # because GitHub Actions cannot make release.yml depend on the separate lean.yml).
+      - run: uv sync --extra dev
+      # The runtime Lean adjudicator is the release authority: build it BEFORE the pytest gate
+      # (the release-path tests exercise the real binary; there is no Python fallback).
       - name: Install elan (Lean toolchain manager)
         run: |
           curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
-      - name: Formal release gate (lake build + Python==Lean conformance)
+      - name: Build the Lean adjudicator (lake build)
         run: |
           (cd formal && lake build)
-          uv run pytest tests/conformance -v
+      - name: Gate (ruff + full pytest incl. Python==Lean conformance)
+        run: |
+          uv run ruff check
+          uv run pytest
       - name: Build the package
         run: uv build
       - name: Publish GitHub release

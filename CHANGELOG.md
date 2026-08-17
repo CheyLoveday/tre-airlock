@@ -3,6 +3,16 @@
 All notable changes are documented here. Format: Keep a Changelog; versioning: SemVer.
 
 ## [Unreleased]
+
+_Nothing yet._
+
+## [0.1.0] - 2026-08-17
+
+**First public release**: the complete TRE-airlock MVP — an executable Lean 4 adjudicator
+formally controls the pre-egress release decision (platform-owned policy, value-closed release
+language, committed generations, ledger-bound verification) with the genotype-feasibility
+pipeline as the worked producer example. Everything below in this section was developed and
+reviewed in the private development repository and ships publicly for the first time here.
 ### Fixed (TRE-airlock MVP — second-review blockers: policy authority, value closure, committed generations, single client surface, artefact verification)
 - **Platform-owned policy Γ:** the trusted release policy now lives in the platform deployment
   record `platform/release_policy.json` (id + version + digest bound into every decision, receipt
@@ -293,7 +303,10 @@ All notable changes are documented here. Format: Keep a Changelog; versioning: S
 - A missing array genotype (`gt_code == -1`) is recorded in the internal-table `reason` even when the carrier is rescued by imputed evidence (previously an unreachable branch).
 - `qc.sample_flag_series` coerces flag columns to bool by meaning, so a sex-check fail stored as the string `"FALSE"` is no longer mis-read as a pass.
 
-## [0.1.0] - 2026-06-09
+## [0.1.0-dev.1] - 2026-06-09
+
+_Internal Wave 1 milestone in the private development repository (its local `v0.1.0` tag);
+superseded by the public 0.1.0 above._
 The Wave 1 MVP: the OFH-shaped genotype-feasibility vertical slice, runnable end-to-end on
 synthetic data with the governance invariants tested.
 
