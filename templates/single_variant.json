@@ -1,0 +1,12 @@
+{
+  "study_id": "OFH-CRRS-TEMPLATE-SINGLE",
+  "cpra": "10:119669928:C:G",
+  "chrom": "10",
+  "pos": 119669928,
+  "ref": "C",
+  "alt": "G",
+  "build": "GRCh38",
+  "carrier_definition": "het_and_homalt",
+  "requested_source": "array_and_imputed",
+  "purpose": "Recontact feasibility: single-variant carrier count (template)"
+}

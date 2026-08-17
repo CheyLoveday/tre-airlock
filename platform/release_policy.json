@@ -1,0 +1,8 @@
+{
+  "schema": "tre-airlock-policy/v1",
+  "policy_id": "tre-airlock-poc-sdc",
+  "version": "1",
+  "min_cell": 10,
+  "round_to": 5,
+  "adjudicator_sha256": null
+}

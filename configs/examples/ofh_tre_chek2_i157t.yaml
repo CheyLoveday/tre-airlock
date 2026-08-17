@@ -1,0 +1,22 @@
+# CHEK2 I157T over OFH-format pVCF/tabix stand-ins.
+# Generate the stand-ins first:
+#   uv run --extra ofhgen python scripts/generate_ofh_files.py --in data/synthetic --out data/synthetic/ofh_tre
+# Run:
+#   uv run --extra ofhgen ofh-feasibility run --config configs/examples/ofh_tre_chek2_i157t.yaml
+#   uv run --extra workflow --extra ofhgen snakemake --cores 1 -s workflow/Snakefile --config config_path=configs/examples/ofh_tre_chek2_i157t.yaml
+array_call_rate_min: 0.98
+array_gq_min: 20
+imputed_dr2_min: 0.30
+imputed_dr2_high_confidence: 0.80
+imputed_dosage_carrier_threshold: 0.5
+imputed_max_gp_min: 0.90
+carrier_definition: het_and_homalt
+require_consent: true
+sdc_min_cell: 10
+sdc_round_to: 5
+data_dir: data/synthetic/ofh_tre
+results_dir: results/config_ofh_tre_chek2_i157t
+request_path: data/synthetic/requests/chek2_i157t.csv
+variant_identifiability_path: docs/reference/variant-identifiability.csv
+variant_catalog_path: configs/catalogs/demo_variant_catalog.yaml
+source_format: ofh_tre

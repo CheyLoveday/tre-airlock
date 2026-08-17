@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feasibility pipeline — architecture (Figure 1)</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#1e293b; --muted:#64748b; --faint:#94a3b8;
+    --line:#e6e9f1; --bg:#f6f8fc; --card:#fff;
+    --indigo:#4f46e5; --emerald:#059669; --violet:#7c3aed; --amber:#d97706;
+    --r:16px; --shadow:0 6px 22px -8px rgba(15,23,42,.18), 0 2px 6px -2px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{margin:0;color:var(--ink);background:
+      radial-gradient(1100px 460px at 80% -8%,#eef2ff 0,rgba(238,242,255,0) 60%),
+      radial-gradient(900px 420px at 6% -6%,#ecfdf5 0,rgba(236,253,245,0) 55%),var(--bg);
+    font:16px/1.6 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:50px 26px 78px}
+  .kicker{font-size:.72rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--indigo)}
+  h1{font-size:2.1rem;line-height:1.1;letter-spacing:-.02em;margin:.35rem 0 .45rem;font-weight:800}
+  .lede{font-size:1.06rem;color:var(--ink2);max-width:780px;margin:0}
+  .panel{margin-top:42px}
+  .panel .head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .panel .tag{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;
+    background:var(--indigo);border-radius:7px;padding:3px 9px}
+  .panel h2{font-size:1.28rem;margin:0;font-weight:750;letter-spacing:-.01em}
+  .panel .note{color:var(--muted);font-size:.92rem;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:24px}
+  .cap{color:var(--muted);font-size:.86rem;margin:12px 2px 0}
+  /* ---- Panel A: layer stack ---- */
+  .stack{display:flex;flex-direction:column;gap:11px}
+  .band{display:flex;align-items:center;gap:18px;border:1px solid;border-radius:13px;padding:13px 16px;position:relative}
+  .band .lbl{flex:0 0 156px}
+  .band .lbl b{display:block;font-size:.93rem;font-weight:750}
+  .band .lbl small{color:var(--muted);font-size:.74rem}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chips i{font-style:normal;font:600 .78rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:#fff;border:1px solid;border-radius:8px;padding:6px 9px;color:var(--ink2)}
+  .orch{background:#f8fafc;border-color:#e2e8f0} .orch .chips i{border-color:#cdd5e1}
+  .shell{background:#eef4ff;border-color:#c7d4f7} .shell .chips i{border-color:#bcccf2}
+  .core{background:#ecfdf5;border-color:#a7e8c6} .core .lbl b{color:var(--emerald)} .core .chips i{border-color:#9fdfbc}
+  .kernel{background:#fff7ed;border-color:#fcd9a8} .kernel .chips i{border-color:#f6cd97}
+  .bound{background:#faf5ff;border-color:#e3d3f7} .bound .lbl b{color:var(--violet)} .bound .chips i{border-color:#dcc8f3}
+  .dep{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--muted);font-size:.9rem}
+  .dep .rule{font:700 .8rem/1 ui-monospace,Menlo,monospace;color:var(--ink2);background:#eef2ff;
+    border:1px solid #c7d4f7;border-radius:7px;padding:5px 9px}
+  .dep .arr{color:var(--emerald);font-weight:800}
+  /* ---- Panel B: flow diagram ---- */
+  .diagram{overflow-x:auto}
+  .diagram svg{display:block;width:100%;height:auto;min-width:0}
+  svg .ttl{fill:var(--ink);font-size:13px;font-weight:650}
+  svg .sub{fill:var(--muted);font-size:10px}
+  svg .num{fill:#fff;font-size:11px;font-weight:700}
+  svg .lane{fill:var(--faint);font-size:11px;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 20px;border-top:1px solid var(--line);
+    margin-top:14px;padding-top:13px;color:var(--muted);font-size:.82rem}
+  .legend i{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+  .legend .sw{width:13px;height:13px;border-radius:4px;display:inline-block}
+  .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+  @media(max-width:720px){.band{flex-direction:column;align-items:flex-start;gap:9px}.band .lbl{flex:none}
+    .diagram svg{min-width:760px}h1{font-size:1.75rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="kicker">Figure 1 · architecture</span>
+    <h1>A governed, scaling feasibility pipeline in a TRE</h1>
+    <p class="lede">Two views of one system. <b>Panel A</b> is the static <b>package structure</b> — how
+    the code is layered. <b>Panel B</b> is the dynamic <b>process structure</b> — how a request flows to a
+    governed result. Both share one pure core: A shows <em>where</em> the logic lives, B shows <em>when</em> it runs.</p>
+  </header>
+
+  <!-- ============ PANEL A ============ -->
+  <section class="panel">
+    <div class="head"><span class="tag">A</span><h2>Package structure</h2>
+      <p class="note">strict layers · each imports only downward</p></div>
+    <div class="card">
+      <div class="stack">
+        <div class="band orch">
+          <div class="lbl"><b>Orchestration</b><small>wires stages, no logic</small></div>
+          <div class="chips"><i>workflow DAG</i><i>CLI</i><i>notebook</i><i>in-memory entry</i></div>
+        </div>
+        <div class="band shell">
+          <div class="lbl"><b>Imperative shell</b><small>all IO, paths, config</small></div>
+          <div class="chips"><i>io</i><i>pipeline</i><i>config (loader)</i><i>format adapter</i></div>
+        </div>
+        <div class="band core">
+          <div class="lbl"><b>Functional core</b><small>pure · deterministic · no IO</small></div>
+          <div class="chips"><i>extract</i><i>qc</i><i>classify</i><i>sdc</i><i>reporting</i><i>airlock</i><i>epi</i><i>resolve</i><i>views</i></div>
+        </div>
+        <div class="band kernel">
+          <div class="lbl"><b>Numeric kernel</b><small>arrays only</small></div>
+          <div class="chips"><i>carrier loop ⟨@njit⟩</i><i>+ NumPy reference oracle</i></div>
+        </div>
+        <div class="band bound">
+          <div class="lbl"><b>Typed boundary</b><small>cross-cuts every layer</small></div>
+          <div class="chips"><i>models ⟨request · result · release⟩</i><i>config schema</i></div>
+        </div>
+      </div>
+      <div class="dep">
+        <span class="arr">▼</span> depends downward only
+        <span class="rule">the core never imports the shell</span>
+        — logic stays pure &amp; unit-testable; IO is quarantined in the shell.
+      </div>
+    </div>
+    <p class="cap"><b>A.</b> Functional core / imperative shell. The pure core (QC, carrier logic,
+    disclosure control, output builders, release predicate) holds the business logic and never touches the
+    filesystem; the shell does all IO and chains stages; orchestration wires them into a quick path or a
+    staged DAG. A compiled numeric kernel handles the hot carrier loop and is reconciled against a NumPy
+    reference. Typed request/result/release objects validate the edges.</p>
+  </section>
+
+  <!-- ============ PANEL B ============ -->
+  <section class="panel">
+    <div class="head"><span class="tag">B</span><h2>Process structure</h2>
+      <p class="note">one governed flow · three gates 🔒 · an epidemiology handoff</p></div>
+    <div class="card diagram">
+      <svg viewBox="0 0 1080 360" role="img" aria-label="Pipeline process diagram">
+        <defs>
+          <filter id="sh" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3.5" flood-color="#0f172a" flood-opacity="0.13"/>
+          </filter>
+          <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2f8"/></linearGradient>
+          <linearGradient id="gGen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#e0e7ff"/></linearGradient>
+          <linearGradient id="gGov" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecfdf5"/><stop offset="1" stop-color="#d6f4e4"/></linearGradient>
+          <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6fbf0"/><stop offset="1" stop-color="#c9f1db"/></linearGradient>
+          <linearGradient id="gEpi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f0ff"/><stop offset="1" stop-color="#e9ddfb"/></linearGradient>
+          <marker id="arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4" orient="auto">
+            <path d="M1 1 L7 4 L1 7" fill="none" stroke="#aab4c5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <symbol id="lock" viewBox="0 0 16 16">
+            <rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6" fill="#059669"/>
+            <path d="M5.2 7 V5.1 a2.8 2.8 0 0 1 5.6 0 V7" fill="none" stroke="#059669" stroke-width="1.5"/>
+          </symbol>
+        </defs>
+        <g stroke="#cbd4e2" stroke-width="2" fill="none">
+          <line x1="150" y1="96" x2="164" y2="96" marker-end="url(#arr)"/>
+          <line x1="300" y1="96" x2="314" y2="96" marker-end="url(#arr)"/>
+          <line x1="450" y1="96" x2="464" y2="96" marker-end="url(#arr)"/>
+          <line x1="600" y1="96" x2="614" y2="96" marker-end="url(#arr)"/>
+          <line x1="750" y1="96" x2="764" y2="96" marker-end="url(#arr)"/>
+          <line x1="900" y1="96" x2="914" y2="96" marker-end="url(#arr)"/>
+          <path d="M533 136 L533 268" marker-end="url(#arr)"/>
+          <line x1="613" y1="302" x2="641" y2="302" marker-end="url(#arr)"/>
+          <line x1="801" y1="302" x2="829" y2="302" marker-end="url(#arr)"/>
+        </g>
+        <g filter="url(#sh)">
+          <rect x="16"  y="56" width="134" height="80" rx="14" fill="url(#gIn)"  stroke="#dbe2ec"/>
+          <rect x="166" y="56" width="134" height="80" rx="14" fill="url(#gGen)" stroke="#c3cbf7"/>
+          <rect x="316" y="56" width="134" height="80" rx="14" fill="url(#gGen)" stroke="#c3cbf7"/>
+          <rect x="466" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="616" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="766" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="916" y="56" width="134" height="80" rx="14" fill="url(#gOut)" stroke="#7fd8a8"/>
+        </g>
+        <g>
+          <circle cx="34" cy="74" r="10" fill="#94a3b8"/><text class="num" x="34" y="78" text-anchor="middle">1</text>
+          <circle cx="184" cy="74" r="10" fill="#4f46e5"/><text class="num" x="184" y="78" text-anchor="middle">2</text>
+          <circle cx="334" cy="74" r="10" fill="#4f46e5"/><text class="num" x="334" y="78" text-anchor="middle">3</text>
+          <circle cx="484" cy="74" r="10" fill="#059669"/><text class="num" x="484" y="78" text-anchor="middle">4</text>
+          <circle cx="634" cy="74" r="10" fill="#059669"/><text class="num" x="634" y="78" text-anchor="middle">5</text>
+          <circle cx="784" cy="74" r="10" fill="#059669"/><text class="num" x="784" y="78" text-anchor="middle">6</text>
+          <circle cx="934" cy="74" r="10" fill="#047857"/><text class="num" x="934" y="78" text-anchor="middle">7</text>
+        </g>
+        <use href="#lock" x="572" y="63" width="14" height="14"/>
+        <use href="#lock" x="722" y="63" width="14" height="14"/>
+        <use href="#lock" x="872" y="63" width="14" height="14"/>
+        <g text-anchor="middle">
+          <text class="ttl" x="83"  y="105">Request</text>   <text class="sub" x="83"  y="122">CPRA · build · source</text>
+          <text class="ttl" x="233" y="105">Pre-flight</text> <text class="sub" x="233" y="122">build · strand · avail.</text>
+          <text class="ttl" x="383" y="105">Slice + QC</text> <text class="sub" x="383" y="122">call-rate · GQ · DR2</text>
+          <text class="ttl" x="533" y="105">Classify</text>   <text class="sub" x="533" y="122">het / hom · consent</text>
+          <text class="ttl" x="683" y="105">SDC</text>        <text class="sub" x="683" y="122">suppress · round · 2°</text>
+          <text class="ttl" x="833" y="105">Airlock</text>    <text class="sub" x="833" y="122">fail-closed gate</text>
+          <text class="ttl" x="983" y="105">Client note</text><text class="sub" x="983" y="122">one go / no-go</text>
+        </g>
+        <text class="lane" x="453" y="256">Internal handoff — genotype-phenotype feasibility</text>
+        <g filter="url(#sh)">
+          <rect x="453" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+          <rect x="641" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+          <rect x="829" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+        </g>
+        <g text-anchor="middle">
+          <text class="ttl" x="533" y="298" fill="#5b21b6">Pseudonymised handoff</text><text class="sub" x="533" y="315">no participant IDs</text>
+          <text class="ttl" x="721" y="298" fill="#5b21b6">Epidemiology</text>          <text class="sub" x="721" y="315">ICD-10 eligibility</text>
+          <text class="ttl" x="909" y="298" fill="#5b21b6">Final return</text>          <text class="sub" x="909" y="315">ceiling + eligible</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <i><span class="sw" style="background:#e0e7ff"></span> genetics</i>
+        <i><span class="sw" style="background:#d6f4e4"></span> governance gate&nbsp;<span style="color:var(--emerald)">🔒</span></i>
+        <i><span class="sw" style="background:#c9f1db"></span> client release</i>
+        <i><span class="sw" style="background:#e9ddfb"></span> epidemiology handoff</i>
+      </div>
+    </div>
+    <p class="cap"><b>B.</b> A typed request passes a request-integrity pre-flight, per-participant QC, and
+    carrier classification under a consent gate, then statistical disclosure control and a fail-closed
+    airlock that emits a single client-facing aggregate. A pseudonymised carrier set is handed to
+    epidemiology for phenotype eligibility and returned in governed aggregate form. The same core runs
+    in-memory (quick path) or as a staged DAG (reproducible path).</p>
+  </section>
+
+  <p class="foot">Synthetic data on real-shaped formats · pure functional core · scoped, vectorised,
+  reproducible execution · governed by construction (consent · disclosure control · fail-closed release).</p>
+
+</div>
+</body>
+</html>

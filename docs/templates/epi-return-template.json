@@ -1,0 +1,14 @@
+{
+  "study_id": "<STUDY_ID — must match the handoff>",
+  "cpra": "<CHR:POS:REF:ALT — must match the handoff>",
+  "run_id": "<copy run_id from epi_notification.json — must match>",
+  "eligible_count": 0,
+  "phenotype_definition_id": "<your ICD-10 phenotype definition id>",
+  "icd10_codeset_label": "<code-set label, e.g. ICD10-heart-disease>",
+  "icd10_codeset_version": "<code-set version, e.g. 2026-01>",
+  "linked_record_scope": "<denominator checked, e.g. primary_care+hospital>",
+  "reviewer": "<your name / id>",
+  "return_timestamp": "<ISO-8601, e.g. 2026-06-09T10:00:00>",
+  "sign_off_status": "signed",
+  "caveats": []
+}

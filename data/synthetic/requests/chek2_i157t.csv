@@ -1,0 +1,2 @@
+study_id,cpra,chrom,pos,ref,alt,build,carrier_definition,requested_source,purpose
+OFH-CRRS-DEMO-CHEK2-I157T,22:28725099:A:G,22,28725099,A,G,GRCh38,het_and_homalt,array_and_imputed,Recontact feasibility: CHEK2 I157T carriers for breast-cancer study

@@ -1,0 +1,22 @@
+# Single-variant demo over the committed simplified synthetic schemas.
+# Generate data first:
+#   uv run python scripts/generate_synthetic.py
+# Run:
+#   uv run python run_demo.py --config configs/examples/single_variant_simplified.yaml
+#   uv run ofh-feasibility run --config configs/examples/single_variant_simplified.yaml
+array_call_rate_min: 0.98
+array_gq_min: 20
+imputed_dr2_min: 0.30
+imputed_dr2_high_confidence: 0.80
+imputed_dosage_carrier_threshold: 0.5
+imputed_max_gp_min: 0.90
+carrier_definition: het_and_homalt
+require_consent: true
+sdc_min_cell: 10
+sdc_round_to: 5
+data_dir: data/synthetic
+results_dir: results/config_single_variant
+request_path: data/synthetic/variant_request.csv
+variant_identifiability_path: docs/reference/variant-identifiability.csv
+variant_catalog_path: configs/catalogs/demo_variant_catalog.yaml
+source_format: simplified

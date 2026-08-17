@@ -1,0 +1,74 @@
+variants:
+  CHEK2_c1100delC:
+    cpra: "22:28695868:AG:A"
+    chrom: "22"
+    pos: 28695868
+    ref: "AG"
+    alt: "A"
+    annotation: "CHEK2 c.1100delC synthetic indel stand-in; array-absent, low-DR2 imputed"
+  CHEK2_I157T:
+    cpra: "22:28725099:A:G"
+    chrom: "22"
+    pos: 28725099
+    ref: "A"
+    alt: "G"
+    annotation: "CHEK2 I157T array-direct SNV"
+  BRCA1_demo:
+    cpra: "17:43044295:G:A"
+    chrom: "17"
+    pos: 43044295
+    ref: "G"
+    alt: "A"
+    annotation: "BRCA1 demo panel SNV"
+  BRCA2_demo:
+    cpra: "13:32316461:C:T"
+    chrom: "13"
+    pos: 32316461
+    ref: "C"
+    alt: "T"
+    annotation: "BRCA2 demo panel SNV"
+  PALB2_demo:
+    cpra: "16:23614412:G:A"
+    chrom: "16"
+    pos: 23614412
+    ref: "G"
+    alt: "A"
+    annotation: "PALB2 demo panel SNV"
+  ATM_demo:
+    cpra: "11:108236123:C:T"
+    chrom: "11"
+    pos: 108236123
+    ref: "C"
+    alt: "T"
+    annotation: "ATM demo panel SNV"
+
+genes:
+  CHEK2:
+    chrom: "22"
+    start: 28687738
+    end: 28742422
+    variants: ["CHEK2_c1100delC", "CHEK2_I157T"]
+  BRCA1:
+    chrom: "17"
+    start: 43044292
+    end: 43170245
+    variants: ["BRCA1_demo"]
+  BRCA2:
+    chrom: "13"
+    start: 32315086
+    end: 32400268
+    variants: ["BRCA2_demo"]
+  PALB2:
+    chrom: "16"
+    start: 23603165
+    end: 23641310
+    variants: ["PALB2_demo"]
+  ATM:
+    chrom: "11"
+    start: 108222804
+    end: 108369102
+    variants: ["ATM_demo"]
+
+panels:
+  breast_cancer:
+    genes: ["BRCA1", "BRCA2", "PALB2", "CHEK2", "ATM"]

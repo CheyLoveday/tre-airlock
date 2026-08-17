@@ -1,0 +1,40 @@
+{
+  "artifact": "docs/reference/variant-identifiability.csv",
+  "generated_utc": "2026-06-16T00:00:00Z",
+  "purpose": "Small public-list-derived grounding artifact for Wave 15 variant identifiability. It ships exact-CPRA resource-membership and annotation-reliability facts only; it does not ship raw OFH CPRA lists, DR2/quality facts, evidence-use decisions, or participant-level data.",
+  "source_release": "Our Future Health public Release 14 GRCh38 CPRA lists",
+  "raw_files_not_committed": true,
+  "source_files": [
+    {
+      "path_local_only": "data/raw/our_future_health_cpra_array_variant_list_grch38_v14.csv",
+      "sha256": "1ce79745c681d1ed263e0d4bbc7d79d15ef31d0e2e22993f5185d36562f342df",
+      "columns_used": ["variant_id", "Inaccurate Call"]
+    },
+    {
+      "path_local_only": "data/raw/our_future_health_cpra_imputed_variant_list_grch38-csv.zip",
+      "sha256": "a41d8533aebf0f317c89968c980998dc4f28eeaded27a230531ffb97630d3c76",
+      "columns_used": ["cpra_grch38", "inaccurate.annotation"]
+    }
+  ],
+  "checks": [
+    {
+      "cpra": "10:119669928:C:G",
+      "array": "exact CPRA present in array resource at line 408214 with Inaccurate Call=No",
+      "imputed": "no exact CPRA hit in imputed resource"
+    },
+    {
+      "cpra": "22:28695868:AG:A",
+      "array": "no exact CPRA hit in array resource",
+      "imputed": "exact CPRA present in imputed resource at line 151212952 with inaccurate.annotation=FALSE"
+    },
+    {
+      "cpra": "22:28725099:A:G",
+      "array": "exact CPRA present in array resource at line 652460 with Inaccurate Call=No",
+      "imputed": "exact CPRA present in imputed resource at line 151214613 with inaccurate.annotation=FALSE"
+    }
+  ],
+  "verification_commands": [
+    "rg -n -F -f /tmp/ofh_wave15_cpras.txt data/raw/our_future_health_cpra_array_variant_list_grch38_v14.csv",
+    "unzip -p data/raw/our_future_health_cpra_imputed_variant_list_grch38-csv.zip '*.csv' | rg -n -F -f /tmp/ofh_wave15_cpras.txt"
+  ]
+}

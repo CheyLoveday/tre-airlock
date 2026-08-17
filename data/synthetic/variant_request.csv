@@ -1,0 +1,2 @@
+study_id,cpra,chrom,pos,ref,alt,build,carrier_definition,requested_source,purpose
+OFH-CRRS-DEMO-001,10:119669928:C:G,10,119669928,C,G,GRCh38,het_and_homalt,array_and_imputed,Recontact feasibility: BAG3 carriers for external cardiology study

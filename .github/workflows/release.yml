@@ -1,0 +1,45 @@
+# Release workflow — fires ONLY on a v-tag push (e.g. `git push origin v0.2.0`). It is dormant
+# until a tag is pushed; it does not run on ordinary pushes/PRs (that's ci.yml). Re-runs the gates,
+# builds the package, and publishes a GitHub release from the auto-generated notes + CHANGELOG.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev --extra kernels
+      - name: Gate (ruff + pytest must pass before any release)
+        run: |
+          uv run ruff check
+          uv run pytest
+      # F4: the formal release gate is part of the release assurance story, so a tag must not
+      # publish unless the Lean checker builds and Python==Lean conformance holds (inlined here
+      # because GitHub Actions cannot make release.yml depend on the separate lean.yml).
+      - name: Install elan (Lean toolchain manager)
+        run: |
+          curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Formal release gate (lake build + Python==Lean conformance)
+        run: |
+          (cd formal && lake build)
+          uv run pytest tests/conformance -v
+      - name: Build the package
+        run: uv build
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body_path: CHANGELOG.md
+          files: dist/*

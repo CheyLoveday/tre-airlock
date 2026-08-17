@@ -1,0 +1,18 @@
+name = "formal"
+version = "0.1.0"
+defaultTargets = ["Release", "releasecheck", "TreAirlock", "airlock"]
+
+[[lean_lib]]
+name = "Release"
+
+[[lean_exe]]
+name = "releasecheck"
+root = "Main"
+
+# Runtime Lean airlock core: the release authority invoked by the Python bridge.
+[[lean_lib]]
+name = "TreAirlock"
+
+[[lean_exe]]
+name = "airlock"
+root = "TreAirlockMain"

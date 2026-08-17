@@ -1,0 +1,54 @@
+{
+  "airlock_four_criteria": {
+    "aligned_with_approved_aims": "human airlock reviewer must attest against the approved study aims",
+    "files_described_and_inspectable": true,
+    "no_reidentification_or_confidentiality_risk": "aggregate + SDC for the export file; participant-level kept internal",
+    "technically_feasible": true
+  },
+  "code_also_through_airlock": true,
+  "cpra": "10:119669928:C:G",
+  "files": [
+    {
+      "classification": "INTERNAL-TRE-ONLY",
+      "export_to_client": false,
+      "file": "internal_carrier_table.parquet",
+      "human_readable": false,
+      "reason": "participant IDs + full QC/decision provenance; OFH recontact ops only"
+    },
+    {
+      "classification": "INTERNAL-TRE-ONLY",
+      "export_to_client": false,
+      "file": "handoff_to_epi.csv",
+      "human_readable": true,
+      "reason": "pseudonymised participant-level; internal handoff for ICD-10 eligibility"
+    },
+    {
+      "classification": "INTERNAL-TRE-ONLY",
+      "export_to_client": false,
+      "file": "frequency_control_view.json",
+      "human_readable": true,
+      "reason": "internal QC/credibility control (per-stratum AF + intervals); not exported"
+    },
+    {
+      "classification": "INTERNAL-TRE-ONLY",
+      "export_to_client": false,
+      "file": "feasibility_summary.txt",
+      "human_readable": true,
+      "reason": "analyst-facing aggregate note; superseded as export by release.json"
+    },
+    {
+      "classification": "AIRLOCK-EXPORT-CANDIDATE",
+      "export_to_client": true,
+      "file": "release.json",
+      "human_readable": true,
+      "reason": "canonical aggregate payload; exact bytes rendered by the Lean airlock"
+    }
+  ],
+  "five_safes": "Safe Outputs \u2014 all transfers reviewed against approved aims; the export is aggregate, SDC-applied, and human-readable",
+  "note": "Only release.json is proposed for export; participant and pseudonymised tables remain in the TRE.",
+  "sdc": {
+    "min_cell": 10,
+    "round_to": 5
+  },
+  "study_id": "TEST"
+}

@@ -1,0 +1,5 @@
+entity,description,primary_key
+participant,Consented participant baseline,participant_id
+genotype,Per-variant genotype slice (array + imputed),participant_id
+sample_qc,Sample-level QC metrics,participant_id
+genetic_data,Variant summary statistics (availability + DR2),cpra

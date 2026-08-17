@@ -1,0 +1,40 @@
+OUR FUTURE HEALTH — GENOTYPE FEASIBILITY SUMMARY (INTERNAL ANALYST NOTE, SDC-APPLIED)
+==============================================================================
+1. REQUEST          TEST | purpose: test
+2. VARIANT          10:119669928:C:G (build GRCh38); ref C / alt G; carrier = het_and_homalt
+3. SOURCES CHECKED  requested: array_and_imputed; variant on OFH array: yes — array-direct evidence available; variant in OFH imputed resource: yes
+   evidence tiers: array-direct > imputed-high (DR2 high) > imputed-conditional
+4. METHOD
+  - Carrier definition: het_and_homalt (>=1 alt allele 'G').
+  - Array QC: call_rate >= 0.98, GQ >= 20.
+  - Imputed evidence is used only when the exact CPRA is present in the imputed resource, variant dosage r2 (DR2) >= 0.3, and per-participant max genotype probability >= 0.9.
+  - Consent gate: withdrawn participants excluded from any recontact set.
+5. ELIGIBLE GENOTYPE CARRIERS (consented, QC-passed) — disclosure-controlled
+  Approximate count: <10   [rounded to nearest 5; SDC applied]
+  Subgroup breakdown (array-direct vs imputed-supported): SUPPRESSED — a subgroup
+  is below the minimum cell size (10); releasing it beside the
+  total would permit back-calculation of the complement.
+  Ancestry breakdown: SUPPRESSED — a per-ancestry stratum is below the minimum
+  cell size; with the total released, showing the rest would expose it.
+6. INTERNAL HANDOFF  pseudonymised carrier set staged for epidemiology (in-TRE)
+7. PHENOTYPE         ICD-10 phenotype eligibility assessed downstream by epi
+8. QUALITY CUT-OFFS  configured and surfaced, not hidden
+  - Array call rate >= 0.98
+  - Array GQ >= 20
+  - Imputed variant DR2 >= 0.3
+  - Imputed max GP >= 0.9
+  - Imputed dosage carrier threshold >= 0.5
+  - DR2 sensitivity: SUPPRESSED — withheld because adjacent thresholds expose a sub-minimum movement.
+9. DISCLOSURE CONTROL
+  - min cell size 10, rounding to nearest 5; secondary suppression withholds the breakdown if any subgroup is small.
+  - The canonical airlock export is the Lean-authorised release.json payload;
+    this note and all participant-level tables remain internal.
+10. CAVEATS
+  - Client request is a CPRA (10:119669928:...) with no explicit genome build; GRCh38 confirmed by REF-to-reference match (REF 'C').
+  - C/G is a palindromic SNP; strand resolved as forward by allele-frequency concordance (cohort MAF 0.013 concords with the reference panel 0.013).
+  - Imputed dosage r2 (DR2) = 0.71 (moderate); imputed-only carriers are conditional and benefit from confirmatory genotyping.
+  - Genotype feasibility only — ICD-10 phenotype eligibility is assessed downstream by epidemiology and will reduce the count.
+  - Sample-level flags (sex-check, relatedness) are recorded in the internal table for review, not silently dropped.
+  - Counts are a feasibility estimate for recruitment planning, not a final invitation list.
+------------------------------------------------------------------------------
+RECOMMENDATION: GO WITH CAVEATS — a credible carrier pool exists, but part of the pool is imputed-supported (conditional confidence); the subgroup breakdown is suppressed under disclosure control; the total is below the disclosure-control minimum cell size.

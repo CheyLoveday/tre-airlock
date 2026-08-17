@@ -1,0 +1,22 @@
+entity,name,type,primary_key_type,coding_name,title,units,description
+participant,participant_id,string,global,,Participant ID,,Internal participant identifier
+participant,pseudo_id,string,,,Pseudo ID,,Pseudonymised ID for the epi handoff
+participant,sex,categorical,,SEX,Reported sex,,Reported sex
+participant,ancestry_stub,categorical,,ANC,Ancestry group,,Genetically-inferred ancestry group
+participant,consent_status,categorical,,CONSENT,Consent status,,Recontact consent state
+participant,baseline_qc_pass,boolean,,,Baseline QC pass,,Passed baseline QC
+genotype,cpra,string,,,Variant CPRA,,Chrom:Pos:Ref:Alt
+genotype,source,categorical,,SOURCE,Source,,array or imputed
+genotype,gt_code,integer,,GT,Hardcall genotype,,Array hardcall genotype code
+genotype,gq,integer,,,Genotype quality,Phred,Array genotype quality
+genotype,call_rate,float,,,Call rate,proportion,Per-sample array call rate
+genotype,dosage,float,,,Alt dosage,alleles,Imputed alt-allele dosage (0-2)
+genotype,max_gp,float,,,Max genotype prob,probability,Imputed max genotype probability
+sample_qc,array_call_rate,float,,,Array call rate,proportion,Sample array call rate
+sample_qc,het_rate,float,,,Heterozygosity,proportion,Heterozygosity rate
+sample_qc,sex_check_pass,boolean,,,Sex check pass,,Genetic sex matches reported
+sample_qc,ancestry_pc1,float,,,Ancestry PC1,,Genetic ancestry principal component 1
+sample_qc,ancestry_pc2,float,,,Ancestry PC2,,Genetic ancestry principal component 2
+sample_qc,kinship_flag,boolean,,,Kinship flag,,In a related pair
+genetic_data,cpra,string,global,,Variant CPRA,,Variant identifier
+genetic_data,dosage_r2,float,,,Imputation DR2,,Variant-level imputation quality (dosage r2)

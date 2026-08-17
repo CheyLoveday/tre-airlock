@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OFH Genotype Feasibility MVP — visual overview</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#1e293b; --muted:#64748b; --faint:#94a3b8;
+    --line:#e6e9f1; --bg:#f6f8fc; --card:#ffffff;
+    --indigo:#4f46e5; --indigo-d:#4338ca;
+    --emerald:#059669; --emerald-d:#047857;
+    --violet:#7c3aed; --amber:#b45309; --amber-bg:#fffbeb; --amber-ln:#fcd9a3;
+    --r:16px; --shadow:0 6px 22px -8px rgba(15,23,42,.18), 0 2px 6px -2px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{margin:0;color:var(--ink);background:
+      radial-gradient(1100px 460px at 78% -8%, #eef2ff 0%, rgba(238,242,255,0) 60%),
+      radial-gradient(900px 420px at 8% -6%, #ecfdf5 0%, rgba(236,253,245,0) 55%), var(--bg);
+    font:16px/1.6 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:52px 26px 80px}
+  .kicker{font-size:.72rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--indigo)}
+  h1{font-size:2.35rem;line-height:1.08;letter-spacing:-.02em;margin:.35rem 0 .5rem;font-weight:800}
+  .lede{font-size:1.12rem;color:var(--ink2);max-width:760px;margin:0 0 22px}
+  .lede b{font-weight:700}
+  .pills{display:flex;flex-wrap:wrap;gap:9px}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;font-size:.83rem;color:var(--ink2);box-shadow:var(--shadow)}
+  .pill .dot{width:8px;height:8px;border-radius:50%}
+  .sec{margin-top:46px}
+  .sec > .kicker{display:block;margin-bottom:8px}
+  h2{font-size:1.32rem;letter-spacing:-.01em;margin:0 0 16px;font-weight:750}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .card.pad{padding:26px}
+  /* diagram */
+  .diagram{padding:24px 22px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .diagram svg{display:block;width:100%;height:auto}
+  svg .ttl{fill:var(--ink);font-size:13px;font-weight:650}
+  svg .sub{fill:var(--muted);font-size:10px}
+  svg .num{fill:#fff;font-size:11px;font-weight:700}
+  svg .lane{fill:var(--faint);font-size:11px;font-weight:600;letter-spacing:.02em}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 20px;padding:6px 4px 2px;color:var(--muted);font-size:.82rem;
+    border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+  .legend i{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+  .legend .sw{width:13px;height:13px;border-radius:4px;display:inline-block}
+  /* features */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}
+  .feat{display:flex;gap:13px;align-items:flex-start}
+  .feat .n{flex:0 0 26px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-size:.78rem;font-weight:700;color:#fff;background:linear-gradient(160deg,var(--indigo),var(--indigo-d));margin-top:1px}
+  .feat p{margin:0;font-size:.95rem;line-height:1.45}
+  .feat b{font-weight:680}
+  .feat span{color:var(--muted)}
+  /* terminal */
+  .term{background:#0b1220;border:1px solid #1e2a44;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+  .term .bar{display:flex;gap:7px;padding:12px 15px;border-bottom:1px solid #1b263f;background:#0d1526}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .term pre{margin:0;padding:18px 20px;color:#dbe6f5;overflow:auto;
+    font:.9rem/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .term .c{color:#7f8db0}
+  .term .g{color:#7ee0a8}
+  /* caveat */
+  .caveat{border:1px solid var(--amber-ln);background:linear-gradient(180deg,#fffdf7,var(--amber-bg));
+    border-radius:var(--r);box-shadow:var(--shadow);padding:24px 26px}
+  .caveat .hd{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .caveat .hd b{font-size:1.05rem;color:var(--amber)}
+  .caveat .ic{width:26px;height:26px;flex:0 0 26px;border-radius:8px;background:#fef3c7;display:grid;
+    place-items:center;color:var(--amber);font-weight:800}
+  .caveat ul{margin:12px 0 0;padding:0;list-style:none;columns:2;column-gap:34px}
+  .caveat li{break-inside:avoid;margin:0 0 9px;padding-left:18px;position:relative;font-size:.92rem;color:var(--ink2)}
+  .caveat li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--amber)}
+  .caveat code{background:#fef3c7;border-radius:5px;padding:1px 5px;font-size:.85em}
+  .caveat .close{margin:14px 0 0;font-size:.95rem;color:var(--ink2)}
+  .foot{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+  .foot a{color:var(--indigo);text-decoration:none;font-weight:600}
+  @media(max-width:680px){
+    .grid,.caveat ul{grid-template-columns:1fr;columns:1}
+    h1{font-size:1.95rem}
+    .diagram svg{min-width:720px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="kicker">TRE release airlock · independent demonstration (not affiliated with Our Future Health)</span>
+    <h1>Genotype feasibility service</h1>
+    <p class="lede">A synthetic, governed <b>recall-by-genotype</b> pipeline: a researcher's variant
+    request becomes an airlock-ready <b>go&nbsp;/&nbsp;no-go</b> decision — with the genetics, quality
+    metrics, and governance all explicit.</p>
+    <div class="pills">
+      <span class="pill"><span class="dot" style="background:var(--indigo)"></span> array + imputed availability</span>
+      <span class="pill"><span class="dot" style="background:var(--emerald)"></span> consent · SDC · fail-closed airlock</span>
+      <span class="pill"><span class="dot" style="background:var(--violet)"></span> pseudonymised epi handoff</span>
+      <span class="pill"><span class="dot" style="background:var(--faint)"></span> synthetic data throughout</span>
+    </div>
+  </header>
+
+  <section class="sec">
+    <span class="kicker">End to end</span>
+    <h2>The pipeline</h2>
+    <div class="card diagram">
+      <svg viewBox="0 0 1080 360" role="img" aria-label="Pipeline diagram">
+        <defs>
+          <filter id="sh" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3.5" flood-color="#0f172a" flood-opacity="0.13"/>
+          </filter>
+          <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2f8"/></linearGradient>
+          <linearGradient id="gGen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#e0e7ff"/></linearGradient>
+          <linearGradient id="gGov" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecfdf5"/><stop offset="1" stop-color="#d6f4e4"/></linearGradient>
+          <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6fbf0"/><stop offset="1" stop-color="#c9f1db"/></linearGradient>
+          <linearGradient id="gEpi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f0ff"/><stop offset="1" stop-color="#e9ddfb"/></linearGradient>
+          <marker id="arr" markerWidth="9" markerHeight="9" refX="6.5" refY="4" orient="auto">
+            <path d="M1 1 L7 4 L1 7" fill="none" stroke="#aab4c5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <symbol id="lock" viewBox="0 0 16 16">
+            <rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6" fill="#059669"/>
+            <path d="M5.2 7 V5.1 a2.8 2.8 0 0 1 5.6 0 V7" fill="none" stroke="#059669" stroke-width="1.5"/>
+          </symbol>
+        </defs>
+
+        <!-- connector lines (drawn first, behind nodes) -->
+        <g stroke="#cbd4e2" stroke-width="2" fill="none">
+          <line x1="150" y1="96" x2="164" y2="96" marker-end="url(#arr)"/>
+          <line x1="300" y1="96" x2="314" y2="96" marker-end="url(#arr)"/>
+          <line x1="450" y1="96" x2="464" y2="96" marker-end="url(#arr)"/>
+          <line x1="600" y1="96" x2="614" y2="96" marker-end="url(#arr)"/>
+          <line x1="750" y1="96" x2="764" y2="96" marker-end="url(#arr)"/>
+          <line x1="900" y1="96" x2="914" y2="96" marker-end="url(#arr)"/>
+          <path d="M533 136 L533 268" marker-end="url(#arr)"/>
+          <line x1="613" y1="302" x2="641" y2="302" marker-end="url(#arr)"/>
+          <line x1="801" y1="302" x2="829" y2="302" marker-end="url(#arr)"/>
+        </g>
+
+        <!-- main flow nodes -->
+        <g filter="url(#sh)">
+          <rect x="16"  y="56" width="134" height="80" rx="14" fill="url(#gIn)"  stroke="#dbe2ec"/>
+          <rect x="166" y="56" width="134" height="80" rx="14" fill="url(#gGen)" stroke="#c3cbf7"/>
+          <rect x="316" y="56" width="134" height="80" rx="14" fill="url(#gGen)" stroke="#c3cbf7"/>
+          <rect x="466" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="616" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="766" y="56" width="134" height="80" rx="14" fill="url(#gGov)" stroke="#9fe0bf"/>
+          <rect x="916" y="56" width="134" height="80" rx="14" fill="url(#gOut)" stroke="#7fd8a8"/>
+        </g>
+
+        <!-- step badges -->
+        <g>
+          <circle cx="34" cy="74" r="10" fill="#94a3b8"/><text class="num" x="34" y="78" text-anchor="middle">1</text>
+          <circle cx="184" cy="74" r="10" fill="#4f46e5"/><text class="num" x="184" y="78" text-anchor="middle">2</text>
+          <circle cx="334" cy="74" r="10" fill="#4f46e5"/><text class="num" x="334" y="78" text-anchor="middle">3</text>
+          <circle cx="484" cy="74" r="10" fill="#059669"/><text class="num" x="484" y="78" text-anchor="middle">4</text>
+          <circle cx="634" cy="74" r="10" fill="#059669"/><text class="num" x="634" y="78" text-anchor="middle">5</text>
+          <circle cx="784" cy="74" r="10" fill="#059669"/><text class="num" x="784" y="78" text-anchor="middle">6</text>
+          <circle cx="934" cy="74" r="10" fill="#047857"/><text class="num" x="934" y="78" text-anchor="middle">7</text>
+        </g>
+        <use href="#lock" x="572" y="63" width="14" height="14"/>
+        <use href="#lock" x="722" y="63" width="14" height="14"/>
+        <use href="#lock" x="872" y="63" width="14" height="14"/>
+
+        <!-- main flow labels -->
+        <g text-anchor="middle">
+          <text class="ttl" x="83"  y="105">Request</text>   <text class="sub" x="83"  y="122">CPRA · build · source</text>
+          <text class="ttl" x="233" y="105">Pre-flight</text> <text class="sub" x="233" y="122">build · strand · avail.</text>
+          <text class="ttl" x="383" y="105">Slice + QC</text> <text class="sub" x="383" y="122">call-rate · GQ · DR2</text>
+          <text class="ttl" x="533" y="105">Classify</text>   <text class="sub" x="533" y="122">het / hom · consent</text>
+          <text class="ttl" x="683" y="105">SDC</text>        <text class="sub" x="683" y="122">suppress · round · 2°</text>
+          <text class="ttl" x="833" y="105">Airlock</text>    <text class="sub" x="833" y="122">fail-closed gate</text>
+          <text class="ttl" x="983" y="105">Lean airlock</text><text class="sub" x="983" y="122">release.json + receipt</text>
+        </g>
+
+        <!-- epidemiology lane -->
+        <text class="lane" x="453" y="256">Internal handoff — genotype-phenotype feasibility</text>
+        <g filter="url(#sh)">
+          <rect x="453" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+          <rect x="641" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+          <rect x="829" y="270" width="160" height="62" rx="13" fill="url(#gEpi)" stroke="#cdb7f0"/>
+        </g>
+        <g text-anchor="middle">
+          <text class="ttl" x="533" y="298" fill="#5b21b6">Pseudonymised handoff</text><text class="sub" x="533" y="315">no participant IDs</text>
+          <text class="ttl" x="721" y="298" fill="#5b21b6">Epidemiology</text>          <text class="sub" x="721" y="315">ICD-10 eligibility</text>
+          <text class="ttl" x="909" y="298" fill="#5b21b6">Final return</text>          <text class="sub" x="909" y="315">ceiling + eligible</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <i><span class="sw" style="background:#e0e7ff"></span> genetics</i>
+        <i><span class="sw" style="background:#d6f4e4"></span> governance gate &nbsp;<span style="color:var(--emerald)">🔒</span></i>
+        <i><span class="sw" style="background:#c9f1db"></span> Lean-adjudicated release</i>
+        <i><span class="sw" style="background:#e9ddfb"></span> epidemiology handoff</i>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="kicker">The work, made visible</span>
+    <h2>Ten things it demonstrates, end to end</h2>
+    <div class="card pad">
+      <div class="grid">
+        <div class="feat"><div class="n">1</div><p><b>Request → reproducible assessment.</b> <span>Researcher criteria become a governed, auditable run.</span></p></div>
+        <div class="feat"><div class="n">2</div><p><b>Array <em>and</em> imputed availability.</b> <span>Assessed separately, grounded in the real published CPRA lists.</span></p></div>
+        <div class="feat"><div class="n">3</div><p><b>Quality metrics surfaced.</b> <span>Allele frequency, imputation DR2, annotation flags, dosage.</span></p></div>
+        <div class="feat"><div class="n">4</div><p><b>Explicit carrier definition.</b> <span>Het / hom-alt with configurable dosage thresholds.</span></p></div>
+        <div class="feat"><div class="n">5</div><p><b>Clear to genetic <em>and</em> non-genetic readers.</b> <span>Assumptions, caveats &amp; limitations up front.</span></p></div>
+        <div class="feat"><div class="n">6</div><p><b>One result, many audiences.</b> <span>Re-skinned for technical / service / governance / ethics.</span></p></div>
+        <div class="feat"><div class="n">7</div><p><b>Prompt handover to epidemiology.</b> <span>A pseudonymised set for ICD-10 phenotype eligibility.</span></p></div>
+        <div class="feat"><div class="n">8</div><p><b>Built for the service clock.</b> <span>A fast feasibility turnaround, not a research timeline.</span></p></div>
+        <div class="feat"><div class="n">9</div><p><b>Reproducible &amp; auditable.</b> <span>Typed contracts, a Snakemake DAG, a tamper-evident audit ledger.</span></p></div>
+        <div class="feat"><div class="n">10</div><p><b>Genetics &amp; tooling fluency.</b> <span>CPRA nomenclature, OFH pVCF/tabix, PLINK2/bcftools-shaped ops, Python.</span></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="kicker">From a clone</span>
+    <h2>Run it</h2>
+    <div class="term">
+      <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+<pre><span class="c"># clone, then:</span>
+make install      <span class="c"># uv sync --extra dev</span>
+make demo         <span class="c"># runs over the shipped synthetic inputs</span>  <span class="g">→ GO, ~15 carriers</span>
+make examples     <span class="c"># single variant · gene + disease panel · OFH-format</span>
+make airlock      <span class="c"># build the Lean adjudicator (release authority)</span>
+make test         <span class="c"># full test suite (make lint for ruff)</span>
+<span class="c"># synthetic inputs ship with the repo; `make gen` refreshes them</span></pre>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="kicker">Said plainly</span>
+    <h2>Honest scope — a quick MVP</h2>
+    <div class="caveat">
+      <div class="hd"><span class="ic">!</span><b>This is a deliberately scoped MVP on synthetic data.</b></div>
+      <p style="margin:0;color:var(--ink2)">The point is the controls, failure modes, and governance —
+      not a production service. Run against <b>real OFH resources</b>, I'd expect edge cases to surface.
+      The design <em>anticipates</em> them; real data is where they get stress-tested:</p>
+      <ul>
+        <li><b>Palindromic strand</b> (C/G, A/T) at common MAF, where AF concordance is ambiguous.</li>
+        <li><b>Indel imputation</b> &amp; array indel calling — the CHEK2 <code>c.1100delC</code> case.</li>
+        <li><b>Build / liftover</b> and reference mismatch on back-formed CPRAs.</li>
+        <li><b>Multi-allelic loci</b> and allele-normalization corner cases.</li>
+        <li><b>Ancestry-sparse strata</b> &amp; small-cell differencing under SDC.</li>
+        <li><b>DR2 thresholds</b> at the credible-vs-conditional boundary.</li>
+        <li><b>Scale</b> — the full ~159M-variant imputed resource, not a fixture.</li>
+      </ul>
+      <p class="close">These are flagged in the pre-flight, the caveats, and the governance gates — but
+      I'd treat first real-data runs as a <b>discovery exercise</b>, surfacing and hardening the difficult
+      edge cases, rather than a finished service.</p>
+    </div>
+  </section>
+
+  <p class="foot">All participant data are synthetic · Start with
+  <a href="for-reviewers.md">for-reviewers.md</a> (5-minute path) and
+  <a href="design-decisions.md">design-decisions.md</a> (the <em>why</em>).</p>
+
+</div>
+</body>
+</html>

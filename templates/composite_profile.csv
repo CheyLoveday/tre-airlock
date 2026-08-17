@@ -1,0 +1,3 @@
+study_id,cpra,chrom,pos,ref,alt,build,carrier_definition,requested_source,purpose
+OFH-CRRS-TEMPLATE-COMPOSITE,10:119669928:C:G,10,119669928,C,G,GRCh38,het_and_homalt,array_and_imputed,Composite recall: multi-variant risk profile (template)
+OFH-CRRS-TEMPLATE-COMPOSITE,10:121000000:A:T,10,121000000,A,T,GRCh38,het_and_homalt,array_and_imputed,Composite recall: multi-variant risk profile (template)

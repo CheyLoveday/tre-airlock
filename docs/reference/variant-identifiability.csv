@@ -1,0 +1,4 @@
+cpra,on_array,on_imputed,annotation_reliable,source_release,evidence
+10:119669928:C:G,TRUE,FALSE,TRUE,OFH public Release 14 GRCh38 CPRA lists,array resource line 408214: exact CPRA present; Inaccurate Call=No; imputed resource: no exact CPRA hit
+22:28695868:AG:A,FALSE,TRUE,TRUE,OFH public Release 14 GRCh38 CPRA lists,array resource: no exact CPRA hit; imputed resource line 151212952: exact CPRA present; inaccurate.annotation=FALSE
+22:28725099:A:G,TRUE,TRUE,TRUE,OFH public Release 14 GRCh38 CPRA lists,array resource line 652460: exact CPRA present; Inaccurate Call=No; imputed resource line 151214613: exact CPRA present; inaccurate.annotation=FALSE

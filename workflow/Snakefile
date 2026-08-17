@@ -1,0 +1,104 @@
+# Snakemake DAG over the OFH feasibility core (Wave 2).
+#
+# OUR local orchestration choice — a thin wrapper that wires one rule per stage to the SAME pure
+# core stage functions (ofh_feasibility.pipeline.stage_*). It is NOT claimed that OFH uses
+# Snakemake; inside the DNAnexus execution model this DAG would map to applets/workflows
+# (Nextflow/WDL are the supported workflow languages). The Snakefile only wires — no analysis logic.
+#
+#   uv run snakemake --cores 1 -s workflow/Snakefile
+#   uv run snakemake -s workflow/Snakefile --dag | dot -Tpng > docs/reference/dag.png
+import logging
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path("src").resolve()))
+
+from ofh_feasibility import pipeline
+from ofh_feasibility.config import load_config
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+cfg = load_config(config.get("config_path", "config.yaml"))
+cfg = cfg.model_copy(
+    update={
+        k: config[k]
+        for k in (
+            "source_format",
+            "data_dir",
+            "results_dir",
+            "request_path",
+            "variant_identifiability_path",
+        )
+        if k in config
+    }
+)
+DATA = cfg.data_dir
+RESULTS = cfg.results_dir
+EXTRACT_INPUTS = list(pipeline.required_input_files(cfg).values())
+
+
+rule all:
+    input:
+        f"{RESULTS}/feasibility_summary.txt",
+        f"{RESULTS}/handoff_to_epi.csv",
+        f"{RESULTS}/airlock_manifest.json",
+        f"{RESULTS}/provenance.json",
+
+
+rule extract:
+    input:
+        EXTRACT_INPUTS,
+    output:
+        f"{RESULTS}/candidate.parquet",
+        f"{RESULTS}/sources.json",
+        f"{RESULTS}/variant_preflight.json",
+        f"{RESULTS}/provenance.json",
+    run:
+        pipeline.stage_extract(cfg)
+
+
+rule qc:
+    input:
+        f"{RESULTS}/candidate.parquet",
+        f"{RESULTS}/sources.json",
+    output:
+        f"{RESULTS}/annotated.parquet",
+    run:
+        pipeline.stage_qc(cfg)
+
+
+rule classify:
+    input:
+        f"{RESULTS}/annotated.parquet",
+        f"{RESULTS}/sources.json",
+    output:
+        f"{RESULTS}/internal_carrier_table.parquet",
+        f"{RESULTS}/handoff_to_epi.csv",
+    run:
+        pipeline.stage_classify(cfg)
+
+
+rule report:
+    input:
+        f"{RESULTS}/internal_carrier_table.parquet",
+        f"{RESULTS}/annotated.parquet",
+        f"{RESULTS}/sources.json",
+        f"{RESULTS}/variant_preflight.json",
+    output:
+        f"{RESULTS}/feasibility_summary.txt",
+        f"{RESULTS}/airlock_pending/release.json",
+        f"{RESULTS}/airlock_pending/release.ready",
+        f"{RESULTS}/frequency_control_view.json",
+        f"{RESULTS}/release_candidate.json",
+    run:
+        pipeline.stage_report(cfg)
+
+
+rule airlock:
+    input:
+        f"{RESULTS}/feasibility_summary.txt",
+    output:
+        f"{RESULTS}/airlock_manifest.json",
+        f"{RESULTS}/airlock_pending/airlock_manifest.json",
+    run:
+        pipeline.stage_airlock(cfg)

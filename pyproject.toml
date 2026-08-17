@@ -1,0 +1,63 @@
+[project]
+name = "ofh_feasibility"
+version = "0.1.0"
+description = "OFH-shaped genotype feasibility MVP (functional core / imperative shell)"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Chey Loveday", email = "hi@drloveday.me.uk" }]
+keywords = ["genomics", "feasibility", "recall-by-genotype", "ofh", "tre"]
+classifiers = ["Programming Language :: Python :: 3", "Private :: Do Not Upload"]
+dependencies = [
+  # Floors mirror the OFH tre-package-access allowlist minimums (verified June 2026); numpy/pandas
+  # floors are higher by project need. uv.lock pins the exact resolved versions.
+  "numpy>=1.26",
+  "pandas>=2.0",
+  "pyarrow>=22.0.0",
+  "pyyaml>=6.0.3",
+  "psutil>=7.2.2",
+  "pydantic>=2.12.5",
+  "numba>=0.63.1",
+]
+
+[project.scripts]
+ofh-feasibility = "ofh_feasibility.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+profile = ["line_profiler>=4"]
+notebook = ["jupyterlab>=4", "matplotlib>=3.10.8"]
+workflow = [
+    "snakemake>=8",
+]
+# ofhgen: LOCAL/DEV-ONLY tooling to generate + read genuine OFH-format genetic files — real bgzip
+# (BGZF) pVCF + tabix via pysam/htslib, exactly as tabix/bcftools read them in the TRE. NEVER a TRE
+# runtime dependency: the feasibility core stays allowlist-clean and pysam is imported lazily, so the
+# package + the simplified path work without it; only the OFH-format ingest needs this extra.
+ofhgen = ["pysam>=0.22"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ofh_feasibility"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+extend-exclude = [".dev", "workflow"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+  "unit: fast pure-function and pydantic-validation tests",
+  "integration: stage/component interaction tests",
+  "e2e: full pipeline over a tiny synthetic cohort",
+  "conformance: Python release_ok vs the Lean checker (skips unless formal/ is built)",
+]

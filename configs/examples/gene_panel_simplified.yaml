@@ -1,0 +1,22 @@
+# Gene/panel demo over the simplified synthetic schemas.
+# Gene and disease requests resolve through variant_catalog_path, then reuse the governed batch path.
+# Generate data first:
+#   uv run python scripts/generate_synthetic.py
+# Run:
+#   uv run ofh-feasibility gene --symbol CHEK2 --config configs/examples/gene_panel_simplified.yaml
+#   uv run ofh-feasibility disease --panel breast_cancer --config configs/examples/gene_panel_simplified.yaml --results-dir results/config_breast_cancer_panel
+array_call_rate_min: 0.98
+array_gq_min: 20
+imputed_dr2_min: 0.30
+imputed_dr2_high_confidence: 0.80
+imputed_dosage_carrier_threshold: 0.5
+imputed_max_gp_min: 0.90
+carrier_definition: het_and_homalt
+require_consent: true
+sdc_min_cell: 10
+sdc_round_to: 5
+data_dir: data/synthetic
+results_dir: results/config_chek2_gene
+variant_identifiability_path: docs/reference/variant-identifiability.csv
+variant_catalog_path: configs/catalogs/demo_variant_catalog.yaml
+source_format: simplified

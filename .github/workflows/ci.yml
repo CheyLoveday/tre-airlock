@@ -1,0 +1,30 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The release path is Lean-gated (bridge.authorize): pytest's e2e/integration release tests
+      # need the runtime adjudicator binary, so build the formal project first (cached).
+      - name: Install elan (Lean toolchain manager)
+        run: |
+          curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Cache Lean toolchain + build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan
+            formal/.lake
+          key: lean-${{ runner.os }}-${{ hashFiles('formal/lean-toolchain', 'formal/lakefile.toml', 'formal/**/*.lean') }}
+          restore-keys: lean-${{ runner.os }}-
+      - name: lake build (runtime airlock adjudicator)
+        working-directory: formal
+        run: lake build
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev   # numba is a runtime dep now; the removed 'kernels' extra would error
+      - run: uv run ruff check
+      - run: uv run pytest

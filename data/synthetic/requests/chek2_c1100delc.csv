@@ -1,0 +1,2 @@
+study_id,cpra,chrom,pos,ref,alt,build,carrier_definition,requested_source,purpose
+OFH-CRRS-DEMO-CHEK2-1100DELC,22:28695868:AG:A,22,28695868,AG,A,GRCh38,het_and_homalt,array_and_imputed,Recontact feasibility: CHEK2 c.1100delC carriers for breast-cancer study

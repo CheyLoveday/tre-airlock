@@ -1,0 +1,4 @@
+pseudo_id,carrier_status,source,confidence,evidence_priority,caveat
+PSU-000003,carrier,array+imputed,high,array_direct,
+PSU-000011,carrier,array+imputed,high,array_direct,
+PSU-000015,carrier,imputed,conditional,imputed_conditional,"imputed-supported, DR2=0.71 (moderate)"

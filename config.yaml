@@ -1,0 +1,21 @@
+# OFH feasibility MVP config — thresholds, paths, flags
+array_call_rate_min: 0.98
+array_gq_min: 20
+imputed_dr2_min: 0.30
+imputed_dr2_high_confidence: 0.80
+imputed_dosage_carrier_threshold: 0.5
+imputed_max_gp_min: 0.90
+carrier_definition: het_and_homalt   # or het_only
+require_consent: true
+# sdc_min_cell: a single configured minimum cell size, documented as a COMPARATOR — not OFH-confirmed
+# policy. UK Biobank uses a floor of 5; this repo picks 10 deliberately (more conservative). round_to
+# must divide it (Config validates) so rounding can't cross the suppression threshold.
+sdc_min_cell: 10
+sdc_round_to: 5
+data_dir: data/synthetic
+results_dir: results
+variant_identifiability_path: docs/reference/variant-identifiability.csv
+variant_catalog_path: configs/catalogs/demo_variant_catalog.yaml
+# input format: 'simplified' (CSV/Parquet stand-ins) or 'ofh_tre' (the real OFH file structure -
+# per-region pVCF + summary-stats VCF + sample-QC TSV; see scripts/generate_ofh_files.py). Wave 9.
+source_format: simplified

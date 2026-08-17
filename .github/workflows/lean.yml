@@ -1,0 +1,30 @@
+# Formal airlock CI. Builds the Lean project (machine-checking every release-boundary invariant —
+# `lake build` green == proven; red == a proof obligation cannot be discharged) and runs the
+# conformance suite (retained battery + generated Python/Lean differential + runtime CLI contract).
+#
+# Lean is the RUNTIME release authority in this POC (bridge.authorize invokes the adjudicator on
+# the actual egress path). Honesty note: the airlock binary is a proposed platform-level TRE
+# component, not an analyst package — it is not on (and does not belong on) the OFH package
+# allowlist, which governs analyst-installable Python packages.
+name: Lean (formal release gate)
+
+on: [push, pull_request]
+
+jobs:
+  lean-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (Lean toolchain manager)
+        run: |
+          curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: lake build (proves the release-gate invariants)
+        working-directory: formal
+        run: lake build
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev
+      - name: Conformance — precursor lockstep + Step A airlock CLI
+        run: uv run pytest tests/conformance -v

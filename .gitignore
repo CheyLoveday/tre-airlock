@@ -1,0 +1,27 @@
+# envs / build
+.venv/
+*.egg-info/
+dist/
+build/
+# python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+# local/generated data + outputs
+data/raw/
+data/tmp/
+data/synthetic/ofh_tre/
+results/
+# IDE / tooling
+.idea/
+.cadence/
+.qodo/
+pytest-cache-files-*/
+tests/_*.yaml
+prof.out
+# snakemake working dir (the reproducible DAG path)
+.snakemake/
+# Lean build output (the formal release gate)
+formal/.lake/
