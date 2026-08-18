@@ -205,7 +205,10 @@ def _audit(args) -> None:
     if not ledger.exists():
         raise SystemExit(f"no audit ledger at {ledger} — run a request first")
     events = io.read_jsonl(ledger)
-    root = (results / pipeline.AUDIT_ROOT).read_text().strip()
+    root_path = results / pipeline.AUDIT_ROOT
+    if not root_path.is_file():
+        raise SystemExit(f"no audit root at {root_path} — the ledger cannot be verified")
+    root = root_path.read_text().strip()
     verified = audit.verify_ledger(events, root)
     leaks = any(audit.has_forbidden_pii(e) for e in events)  # no participant/pseudo data may appear
     pii = "OK" if not leaks else "FAIL"

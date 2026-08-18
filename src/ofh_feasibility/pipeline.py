@@ -579,8 +579,7 @@ def orchestrate_batch(
     with bridge.release_transaction(candidate, pending) as decision:  # the one release txn
         io.write_text(summary, summary_path)  # INTERNAL analyst note
         io.write_json(candidate.model_dump(), candidate_path)
-        io.write_json(manifest, manifest_path)
-        io.write_json(manifest, pending / BATCH_MANIFEST)
+        io.write_json(manifest, manifest_path)  # INTERNAL review evidence (carries study_id)
         emit_batch_audit_event(
             cfg, batch, candidate,
             [summary_path, candidate_path, manifest_path, pending / RELEASE_PAYLOAD],
@@ -735,8 +734,7 @@ def finalize_eligible(
     with bridge.release_transaction(candidate, pending) as decision:
         io.write_text(summary, summary_path)  # INTERNAL analyst note
         io.write_json(candidate.model_dump(), candidate_path)
-        io.write_json(manifest, manifest_path)
-        io.write_json(manifest, pending / FINAL_MANIFEST)
+        io.write_json(manifest, manifest_path)  # INTERNAL review evidence (carries study_id)
         emit_finalize_audit_event(
             cfg, request, candidate,
             [summary_path, candidate_path, manifest_path, pending / RELEASE_PAYLOAD],
@@ -937,8 +935,9 @@ def stage_airlock(cfg: Config) -> None:
     results = Path(cfg.results_dir)
     request = io.read_request(_request_path(cfg))
     manifest_dict = airlock.build_airlock_manifest(request, airlock.default_airlock_files(), cfg)
+    # the manifest stays OUT of airlock_pending: it embeds the study id, and the egress-pending
+    # area holds only the committed generation (release.json + release.ready).
     io.write_json(manifest_dict, results / MANIFEST)
-    io.write_json(manifest_dict, results / AIRLOCK_PENDING / MANIFEST)
     exports = sum(f["export_to_client"] for f in manifest_dict["files"])
     logger.info(
         "airlock: %d files staged, %d export candidate(s)", len(manifest_dict["files"]), exports

@@ -1,18 +1,27 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: read
+env:
+  UV_LOCKED: "1"   # every uv command asserts the committed lockfile; drift fails, never mutates
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]  # the full declared requires-python range
     steps:
-      - uses: actions/checkout@v4
-      # The release path is Lean-gated (bridge.authorize): pytest's e2e/integration release tests
-      # need the runtime adjudicator binary, so build the formal project first (cached).
+      # Actions pinned to full commit SHAs (tags are mutable; SHAs are not).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # The release path is Lean-gated (bridge): pytest's release tests need the runtime
+      # adjudicator binary, so build the formal project first (cached; one toolchain per key).
       - name: Install elan (Lean toolchain manager)
         run: |
           curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Cache Lean toolchain + build
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.elan
@@ -22,9 +31,11 @@ jobs:
       - name: lake build (runtime airlock adjudicator)
         working-directory: formal
         run: lake build
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
-          python-version: "3.12"
-      - run: uv sync --extra dev   # numba is a runtime dep now; the removed 'kernels' extra would error
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --extra dev
+      - name: Lockfile unchanged by the gate
+        run: git diff --exit-code -- uv.lock pyproject.toml
       - run: uv run ruff check
       - run: uv run pytest

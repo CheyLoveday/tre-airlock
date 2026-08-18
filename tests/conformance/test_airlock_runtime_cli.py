@@ -19,7 +19,7 @@ pytestmark = pytest.mark.conformance
 
 _EXE = Path(__file__).resolve().parents[2] / "formal" / ".lake" / "build" / "bin" / "airlock"
 
-SCHEMA = "tre-airlock/v1"
+SCHEMA = "tre-airlock/v2"
 POLICY_OK = {"min_cell": 10, "round_to": 5}
 
 
@@ -34,11 +34,9 @@ def _candidate(
     *,
     total: dict,
     breakdown: dict,
-    study_id: str = "s",
     subject_id: str = "10:119669928:C:G",
 ) -> dict:
     return {
-        "study_id": study_id,
         "subject_id": subject_id,
         "total": total,
         "breakdown": breakdown,
@@ -74,9 +72,9 @@ def test_valid_shown_total_emits_canonical_payload(airlock_exe: Path) -> None:
     body = json.loads(proc.stdout)
     assert proc.stdout.endswith(b"\n")
     assert proc.stdout.decode() == (
-        '{"schema":"tre-airlock/v1","status":"released",'
+        '{"schema":"tre-airlock/v2","status":"released",'
         '"policy":{"min_cell":10,"round_to":5},'
-        '"study_id":"s","subject_id":"10:119669928:C:G",'
+        '"subject_id":"10:119669928:C:G",'
         '"total":"~70","breakdown":null}\n'
     )
     assert body["status"] == "released"
@@ -223,3 +221,13 @@ def test_empty_stdin_malformed(airlock_exe: Path) -> None:
     proc = _run("")
     assert proc.returncode == 2
     assert proc.stdout == b""
+
+
+def test_study_id_is_an_unknown_field_in_v2(airlock_exe: Path) -> None:
+    # v2 removed study_id from the released representation entirely: strict parsing refuses it.
+    body = _request(_candidate(total={"tag": "shown", "n": 70}, breakdown={"tag": "suppressed"}))
+    body["candidate"]["study_id"] = "demo"
+    proc = _run(body)
+    assert proc.returncode == 2
+    assert proc.stdout == b""
+    assert b"unknown field: study_id" in proc.stderr

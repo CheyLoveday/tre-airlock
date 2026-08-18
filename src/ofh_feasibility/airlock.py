@@ -7,7 +7,7 @@ file may be export_to_client, and it must be human-readable + classified AIRLOCK
 RELEASE AUTHORITY (TRE-airlock MVP): the final pre-egress decision is made by the executable Lean
 airlock (`formal/TreAirlock`), invoked via `bridge.authorize`. Every release is a
 `ReleaseCandidate` (aggregate-only) mapped by `build_airlock_request` into the strict
-`tre-airlock/v1` request; only the exact Lean-emitted bytes may be written as the canonical
+`tre-airlock/v2` request; only the exact Lean-emitted bytes may be written as the canonical
 release payload. The Python predicates here (`release_ok` / `authorize_release`) mirror the Lean
 `ReleaseOK` judgment as a reference/preflight implementation and differential-conformance target —
 their verdict is not release authority. Pure; no IO.
@@ -287,7 +287,6 @@ _MAX_COUNT = 1_000_000_000
 _MAX_CELLS = 16
 _MAX_SUBJECT_VARIANTS = 16
 _CHROMS = frozenset([str(n) for n in range(1, 23)] + ["X", "Y", "MT"])
-_STUDY_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}\Z")  # \Z: no trailing-newline latitude
 _ALLELE_RE = re.compile(r"^[ACGT]{1,64}\Z")
 _TOTAL_COUNT_RE = re.compile(r"^[0-9]{1,10}\Z")  # canonical ASCII digits, bounded
 _MAX_POS = 1_000_000_000_000
@@ -313,15 +312,16 @@ def _require_valid_subject(subject: str) -> None:
 
 
 def build_airlock_request(candidate: ReleaseCandidate, policy) -> dict:
-    """Map the aggregate release candidate to the strict `tre-airlock/v1` request (pure).
+    """Map the aggregate release candidate to the strict `tre-airlock/v2` request (pure).
 
     `policy` is the PLATFORM-authorised `TrustedReleasePolicy` (bridge.load_trusted_policy) —
     never the analysis config and never the candidate: the analysis must not choose the policy
     under which its own output is judged. The candidate's declared min_cell/round_to are audit
     fields only, and a disagreement with the authorised policy refuses before adjudication.
     Display tokens map back to the structural form Lean judges — `~N` -> shown, the exact
-    `<{min_cell}` token -> suppressed. Anything outside the closed value language (unapproved
-    labels, malformed identifiers, over-cap values) fails fast here AND in the Lean parser.
+    `<{min_cell}` token -> suppressed. The candidate's study_id is NOT serialised (internal
+    evidence only). Anything outside the closed value language (unapproved labels, malformed
+    subjects, over-cap values) fails fast here AND in the Lean parser.
     """
     if (candidate.min_cell, candidate.round_to) != (policy.min_cell, policy.round_to):
         raise ValueError(
@@ -329,8 +329,6 @@ def build_airlock_request(candidate: ReleaseCandidate, policy) -> dict:
             f"({candidate.min_cell}, {candidate.round_to}) but the platform-authorised policy "
             f"is ({policy.min_cell}, {policy.round_to}) — refusing before adjudication"
         )
-    if not _STUDY_ID_RE.match(candidate.study_id):
-        raise ValueError(f"airlock request: invalid study_id {candidate.study_id!r}")
     _require_valid_subject(candidate.cpra)
     token = candidate.client_total
     if token == f"<{policy.min_cell}":
@@ -368,10 +366,11 @@ def build_airlock_request(candidate: ReleaseCandidate, policy) -> dict:
             "cells": [{"label": name, "count": n} for name, n in candidate.reported_cells],
         }
     return {
-        "schema": "tre-airlock/v1",
+        "schema": "tre-airlock/v2",
         "policy": {"min_cell": policy.min_cell, "round_to": policy.round_to},
         "candidate": {
-            "study_id": candidate.study_id,
+            # NO study_id: the released representation carries no free-form string field; study
+            # identity lives in INTERNAL evidence (audit events, manifests) only.
             "subject_id": candidate.cpra,  # TRE-neutral subject key; the example carries CPRAs
             "total": total,
             "breakdown": breakdown,

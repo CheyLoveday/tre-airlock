@@ -1,6 +1,11 @@
-# Release workflow — fires ONLY on a v-tag push (e.g. `git push origin v0.2.0`). It is dormant
-# until a tag is pushed; it does not run on ordinary pushes/PRs (that's ci.yml). Re-runs the gates,
-# builds the package, and publishes a GitHub release from the auto-generated notes + CHANGELOG.
+# Release workflow — fires ONLY on a v-tag push. Split per least privilege: the gate job holds
+# read-only permissions; only the publish job may write, and it publishes nothing until the gate
+# is green. DISTRIBUTION BOUNDARY: this project is a SOURCE-DISTRIBUTED POC — the complete
+# airlock needs the source checkout, the platform policy record (platform/), and a locally built
+# Lean adjudicator (make airlock). No wheel/sdist is attached: a py3-none-any wheel cannot carry
+# the native adjudicator or the platform record and would not be a runnable airlock (a deployable
+# bundle — executable + policy + pinned digest, per-platform — is future work). With no built
+# artefacts there is nothing to checksum or attest; the release is the tagged source itself.
 name: Release
 
 on:
@@ -9,17 +14,16 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  UV_LOCKED: "1"
 
 jobs:
-  release:
+  gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.12"
-      - run: uv sync --extra dev
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # The runtime Lean adjudicator is the release authority: build it BEFORE the pytest gate
       # (the release-path tests exercise the real binary; there is no Python fallback).
       - name: Install elan (Lean toolchain manager)
@@ -27,17 +31,28 @@ jobs:
           curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Build the Lean adjudicator (lake build)
-        run: |
-          (cd formal && lake build)
+        working-directory: formal
+        run: lake build
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev
+      - name: Lockfile unchanged by the gate
+        run: git diff --exit-code -- uv.lock pyproject.toml
       - name: Gate (ruff + full pytest incl. Python==Lean conformance)
         run: |
           uv run ruff check
           uv run pytest
-      - name: Build the package
-        run: uv build
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Publish GitHub release (tagged source only; no built artefacts)
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           generate_release_notes: true
           body_path: CHANGELOG.md
-          files: dist/*

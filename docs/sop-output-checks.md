@@ -16,8 +16,8 @@ but a person confirms the release before it leaves the TRE. Run this checklist o
       suppressed** (secondary suppression — a total beside a suppressed subgroup would leak by
       differencing).
 - [ ] The export (`airlock_pending/release.json`) contains **no participant identifiers**, no
-      pseudo-ids, no participant-level rows — aggregate only (`schema`, `status`, `policy`,
-      `study_id`, `subject_id`, `total`, `breakdown`).
+      pseudo-ids, no participant-level rows, and NO free-form string field — aggregate only
+      (`schema`, `status`, `policy`, `subject_id`, `total`, `breakdown`).
 - [ ] `release.ready` exists beside the payload and `ofh-feasibility audit verify` reports
       `release_generation=OK` — this checks the receipt's payload/request digests against the
       artefacts AND replays the attested adjudicator over the retained request preimage

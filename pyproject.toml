@@ -1,6 +1,6 @@
 [project]
 name = "ofh_feasibility"
-version = "0.1.0"
+version = "0.1.1"
 description = "OFH-shaped genotype feasibility MVP (functional core / imperative shell)"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"

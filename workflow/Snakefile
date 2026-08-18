@@ -99,6 +99,5 @@ rule airlock:
         f"{RESULTS}/feasibility_summary.txt",
     output:
         f"{RESULTS}/airlock_manifest.json",
-        f"{RESULTS}/airlock_pending/airlock_manifest.json",
     run:
         pipeline.stage_airlock(cfg)

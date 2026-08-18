@@ -23,10 +23,9 @@ One JSON object. Unknown fields, missing fields, and unknown schemas are refused
 
 ```json
 {
-  "schema": "tre-airlock/v1",
+  "schema": "tre-airlock/v2",
   "policy": { "min_cell": 10, "round_to": 5 },
   "candidate": {
-    "study_id": "demo",
     "subject_id": "10:119669928:C:G",
     "total": { "tag": "shown", "n": 70 },
     "breakdown": { "tag": "suppressed" }
@@ -36,14 +35,17 @@ One JSON object. Unknown fields, missing fields, and unknown schemas are refused
 
 `total` / `breakdown` tags: `suppressed` or `shown`. Shown breakdowns carry
 `cells: [{ "label", "count" }]`. Counts are natural numbers (negatives are
-malformed). Policy is **not** a field of the candidate.
+malformed). Policy is **not** a field of the candidate, and the candidate carries **no free-form
+string field**: v2 removed `study_id` from the released representation entirely (study
+identity lives in INTERNAL evidence — audit events and manifests). `subject_id` is one or
+more parsed CPRAs joined by `+`.
 
 ## Success (stdout)
 
 Exit `0`. Compact JSON, fixed key order, one trailing newline. Example:
 
 ```json
-{"schema":"tre-airlock/v1","status":"released","policy":{"min_cell":10,"round_to":5},"study_id":"demo","subject_id":"10:119669928:C:G","total":"~70","breakdown":null}
+{"schema":"tre-airlock/v2","status":"released","policy":{"min_cell":10,"round_to":5},"subject_id":"10:119669928:C:G","total":"~70","breakdown":null}
 ```
 
 Display tokens (`<k`, `~N`) are created by the renderer from `Γ`.
@@ -103,14 +105,17 @@ configurable by analysts:
   platform-managed read-only absolute path), never read from the environment,
   the analysis config, or the candidate. Every adjudication records the
   SHA-256 of the executable actually invoked; the policy record's
-  `adjudicator_sha256` field is the mandatory production trust anchor —
-  when set, a mismatch refuses before invocation. It is null in this repo
-  only because the binary is built per-host.
+  `adjudicator_sha256` field is the production trust anchor — when set, a
+  mismatch refuses before invocation. It is null in this repo because the
+  binary is built per-host, and null means the executable is **path-bound
+  and MEASURED, not cryptographically authenticated**: a deployment must
+  supply the pin (and reject null in production mode) to turn measurement
+  into authentication.
 
 Lean formally guarantees payload construction from a proof-indexed
 `AirlockExport` over a value-closed release language (finite label
-vocabulary, parsed CPRA subject, charset-capped study reference, bounded
-counts — free text cannot inhabit the released representation). The bridge,
+vocabulary, parsed CPRA subject, bounded counts — no free-form string
+field inhabits the released representation). The bridge,
 publisher, bindings, and filesystem are the operational half — disciplined
 and tested Python, attested by digest, not proved in Lean. In-process Python
 has no memory isolation: analyst code running in the SAME interpreter could
@@ -142,5 +147,19 @@ pinned digest, no test seams, narrowly permissioned filesystem).
   digest is available; comparing recorded digests against retained artefacts
   is **verification**. The ledger's digests alone support verification only.
 - `ofh-feasibility audit verify` checks the ledger (Merkle root + PII scan)
-  AND the committed generation: receipt-vs-payload digest, retained preimage
-  digest, adjudicator attestation, and byte-for-byte replay.
+  AND the committed generation — and `verify_release_generation` is
+  self-sufficient: it recomputes the Merkle root itself, requires the
+  COMPLETE receipt to canonically equal the ledger-bound decision record
+  (any single-field receipt mutation fails), verifies the platform policy
+  record on disk is the one that authorised the generation (digest, id,
+  version), checks the retained preimage digest and adjudicator
+  attestation, and replays the attested adjudicator byte-for-byte.
+
+## Distribution boundary
+
+This is a SOURCE-DISTRIBUTED POC: the complete airlock is the source
+checkout + the platform record (`platform/`) + a locally built adjudicator
+(`make airlock`). A `py3-none-any` wheel cannot carry the native Lean
+executable or the platform record, so no wheel/sdist is published as a
+release asset; a deployable bundle (executable + policy + pinned digest,
+per platform) is future work.

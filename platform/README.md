@@ -8,10 +8,13 @@ committed stand-in for that deployment surface.
   loads Γ from here; the analysis pipeline, its config, and the candidate cannot select or alter
   the policy under which a release is judged. `Policy.Valid` (internal coherence, checked by
   Lean) and policy **authorisation** (this file being the platform's) are distinct conditions.
-  - `adjudicator_sha256`: optional mandatory trust anchor for the Lean adjudicator executable.
-    When non-null, the bridge refuses to invoke an executable whose SHA-256 differs — before
-    invocation. It is null in this repo only because the binary is built per-host by
-    `lake build`; a production deployment MUST pin the digest of its released binary here.
+  - `adjudicator_sha256`: trust anchor for the Lean adjudicator executable. When non-null,
+    the bridge refuses to invoke an executable whose SHA-256 differs — before invocation. It is
+    null in this repo because the binary is built per-host by `lake build`. **Null means the
+    executable is path-bound and MEASURED (its digest recorded), not cryptographically
+    AUTHENTICATED.** A production deployment MUST build the executable, hash it, generate this
+    record with that exact digest, ship both together, and treat a null pin as a configuration
+    error.
 
 Changing this file is a platform governance action: it changes which releases are possible for
 every run. The bridge binds the policy's id, version, and file digest into every adjudication

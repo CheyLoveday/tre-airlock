@@ -346,9 +346,12 @@ def test_uncommitted_payload_is_not_verifiable_and_is_rotated_by_the_next_attemp
 
 
 def _bind_ledger(results_dir, decision):
-    """Append the minimal ledger event a production transaction would have written."""
+    """Append the minimal ledger event + Merkle root a production transaction would write."""
+    from ofh_feasibility import audit
+
     event = {"airlock": bridge.ready_receipt(decision, results_dir)}
     (results_dir / "audit_ledger.jsonl").write_text(json.dumps(event) + "\n")
+    (results_dir / "audit_root.txt").write_text(audit.root_of_events([event]))
 
 
 # --- generation verification (second-review item 5) -------------------------------------------
@@ -429,3 +432,58 @@ def test_verifier_flags_replay_unavailable_on_adjudicator_change(exe, tmp_path, 
     report = bridge.verify_release_generation(tmp_path)
     assert report["ok"] is False
     assert any("replay not possible" in f for f in report["failures"])
+
+
+@pytest.mark.parametrize("mutate", [
+    ("schema", lambda r: r.__setitem__("schema", "tre-airlock/v999")),
+    ("policy.id", lambda r: r["policy"].__setitem__("id", "forged-policy")),
+    ("policy.version", lambda r: r["policy"].__setitem__("version", "999")),
+    ("policy.sha256", lambda r: r["policy"].__setitem__("sha256", "0" * 64)),
+    ("adjudicator.kind", lambda r: r["adjudicator"].__setitem__("kind", "python-fallback")),
+    ("adjudicator.path", lambda r: r["adjudicator"].__setitem__("path", "/tmp/forged")),
+    ("adjudicator.sha256", lambda r: r["adjudicator"].__setitem__("sha256", "0" * 64)),
+    ("request.retained_internal_path",
+     lambda r: r["request"].__setitem__("retained_internal_path", "/tmp/elsewhere")),
+    ("payload.canonical_path",
+     lambda r: r["payload"].__setitem__("canonical_path", "elsewhere/release.json")),
+], ids=lambda m: m[0] if isinstance(m, tuple) else str(m))
+def test_every_receipt_field_is_ledger_bound(exe, tmp_path, mutate):
+    # third review, item 2: mutating ANY receipt field — not just the payload/request digests —
+    # must fail verification, because the whole receipt is bound to the Merkle ledger record.
+    pending = tmp_path / "airlock_pending"
+    decision = bridge.publish_release(_candidate(), pending)
+    _bind_ledger(tmp_path, decision)
+    assert bridge.verify_release_generation(tmp_path)["ok"] is True
+
+    receipt = json.loads((pending / bridge.RELEASE_READY).read_text())
+    mutate[1](receipt)
+    (pending / bridge.RELEASE_READY).write_text(
+        json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    report = bridge.verify_release_generation(tmp_path)
+    assert report["ok"] is False, mutate[0]
+    assert any("ledger-bound decision record" in f for f in report["failures"]), report
+
+
+def test_rotated_policy_record_is_reported(exe, tmp_path, monkeypatch):
+    # the platform policy on disk must be the one that authorised the generation.
+    pending = tmp_path / "airlock_pending"
+    decision = bridge.publish_release(_candidate(), pending)
+    _bind_ledger(tmp_path, decision)
+    monkeypatch.setattr(bridge, "_TEST_POLICY_OVERRIDE", _seam_policy(tmp_path, 10, 5))
+    report = bridge.verify_release_generation(tmp_path)
+    assert report["ok"] is False
+    assert any("not the one that authorised" in f for f in report["failures"]), report
+
+
+def test_tampered_ledger_root_fails_verification(exe, tmp_path):
+    # the verifier recomputes the Merkle root itself — it does not trust the CLI to have done it.
+    pending = tmp_path / "airlock_pending"
+    decision = bridge.publish_release(_candidate(), pending)
+    _bind_ledger(tmp_path, decision)
+    ledger = tmp_path / "audit_ledger.jsonl"
+    forged_event = {"airlock": bridge.ready_receipt(decision, tmp_path), "note": "inserted"}
+    ledger.write_text(ledger.read_text() + json.dumps(forged_event) + "\n")  # root now stale
+    report = bridge.verify_release_generation(tmp_path)
+    assert report["ok"] is False
+    assert any("Merkle root" in f for f in report["failures"]), report

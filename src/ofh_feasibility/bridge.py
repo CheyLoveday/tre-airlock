@@ -53,7 +53,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from . import airlock
+from . import airlock, audit
 
 if TYPE_CHECKING:
     from .models import ReleaseCandidate
@@ -175,7 +175,7 @@ def load_trusted_policy() -> TrustedReleasePolicy:
 
 
 def encode_request(request: dict) -> bytes:
-    """Canonical compact encoding of the `tre-airlock/v1` request (the adjudicator's stdin)."""
+    """Canonical compact encoding of the `tre-airlock/v2` request (the adjudicator's stdin)."""
     return json.dumps(request, separators=(",", ":")).encode()
 
 
@@ -385,33 +385,63 @@ def _ledger_binding_failures(results: Path, receipt: dict) -> list[str]:
 
     The receipt is a plain file: an actor with write access could swap in a fully
     self-consistent forged generation (payload + receipt + evidence all rewritten, even
-    replay-valid). The audit LEDGER is Merkle-rooted, so the committed generation must match the
-    airlock record the ledger captured inside the transaction — a swapped generation cannot.
+    replay-valid), or quietly rewrite any single receipt field (a policy identity, an
+    adjudicator path). The audit LEDGER is Merkle-rooted, so the verifier (1) recomputes the
+    Merkle root itself — it does not assume a separately verified ledger — and (2) requires the
+    COMPLETE receipt to equal, canonically, the COMPLETE airlock record the ledger captured
+    inside the transaction. Both are produced from `ready_receipt`, so any difference at all is
+    tampering, not drift. (3) The platform policy record on disk must still be the one that
+    authorised the generation (digest, id, and version).
+
+    Threat-model scope, stated plainly: this defeats an actor who can rewrite the receipt (and
+    even regenerate payload/evidence) but NOT the ledger and its root. An actor who can rewrite
+    audit_ledger.jsonl AND audit_root.txt as well is beyond any co-located file's protection —
+    countering that requires anchoring the Merkle root externally (platform log, transparency
+    service), which is deployment work, not a property this verifier claims.
     """
     ledger = results / "audit_ledger.jsonl"
     if not ledger.is_file():
         return ["committed generation has no audit ledger to bind against"]
-    airlock_records = []
+    events = []
     for line in ledger.read_text().splitlines():
         if not line.strip():
             continue
         try:
-            event = json.loads(line)
+            events.append(json.loads(line))
         except ValueError:
             return ["unreadable audit ledger"]
-        if isinstance(event, dict) and isinstance(event.get("airlock"), dict):
-            airlock_records.append(event["airlock"])
+    root_file = results / "audit_root.txt"
+    if not root_file.is_file():
+        return ["committed generation has no audit root to bind against"]
+    if audit.root_of_events(events) != root_file.read_text().strip():
+        return ["audit ledger does not match its Merkle root (modified/reordered/truncated)"]
+    airlock_records = [
+        e["airlock"] for e in events
+        if isinstance(e, dict) and isinstance(e.get("airlock"), dict)
+    ]
     if not airlock_records:
         return ["committed generation has no airlock record in the audit ledger"]
     recorded = airlock_records[-1]  # the transaction appends its event before committing
     failures = []
-    if recorded.get("payload", {}).get("sha256") != receipt.get("payload", {}).get("sha256"):
+    if audit.canonical_json(receipt) != audit.canonical_json(recorded):
         failures.append(
-            "receipt payload sha256 does not match the ledger's recorded airlock payload"
+            "release receipt does not exactly match the ledger-bound decision record"
         )
-    if recorded.get("request", {}).get("sha256") != receipt.get("request", {}).get("sha256"):
+    # the receipt's policy identity must be the platform record still on disk — a rotated or
+    # substituted policy record is a distinct, reportable state, not silent success.
+    try:
+        policy = load_trusted_policy()
+    except (RuntimeError, ValueError) as exc:
+        failures.append(f"platform policy record unavailable for verification: {exc}")
+        return failures
+    recorded_policy = receipt.get("policy", {})
+    if (
+        recorded_policy.get("sha256") != policy.policy_sha256
+        or recorded_policy.get("id") != policy.policy_id
+        or recorded_policy.get("version") != policy.version
+    ):
         failures.append(
-            "receipt request sha256 does not match the ledger's recorded airlock request"
+            "current platform policy record is not the one that authorised this generation"
         )
     return failures
 

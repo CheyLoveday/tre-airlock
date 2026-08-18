@@ -8,12 +8,13 @@ for reproducibility, epidemiology handoff, or output review.
 1. The pure core builds exact internal counts.
 2. `sdc.py` applies minimum cell size, rounding, and secondary suppression.
 3. `airlock.py` builds an aggregate-only `ReleaseCandidate` and maps it into a strict
-   `tre-airlock/v1` request under the **platform-owned trusted policy**
+   `tre-airlock/v2` request under the **platform-owned trusted policy**
    (`platform/release_policy.json` — never the analysis config, never the candidate; a
    disagreement refuses before adjudication).
 4. `bridge.py` invokes the **runtime Lean 4 airlock** (`formal/TreAirlock`) — a digest-attested,
    platform-bound executable — over a value-closed release language (finite label vocabulary,
-   parsed CPRA subject, charset-capped study reference, bounded counts): only a proof-bearing
+   parsed CPRA subject, bounded counts — no free-form string field; study identity stays in
+   internal evidence): only a proof-bearing
    success branch constructs an `AirlockExport` and renders the canonical payload.
 5. The release transaction places the **exact Lean-emitted bytes** at
    `results/airlock_pending/release.json` and commits the generation with a `release.ready`

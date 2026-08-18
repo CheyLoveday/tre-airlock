@@ -40,17 +40,16 @@ def renderBreakdown : Breakdown → String
       "[" ++ String.intercalate "," (cells.map renderCell) ++ "]"
 
 /-- Compact JSON, fixed key order:
-`schema`, `status`, `policy`, `study_id`, `subject_id`, `total`, `breakdown`.
+`schema`, `status`, `policy`, `subject_id`, `total`, `breakdown`.
 A single trailing newline is added by the CLI, not here. -/
 def render (e : AirlockExport) : String :=
   let Γ := e.policy
   let c := e.candidate
   "{" ++
-    "\"schema\":\"tre-airlock/v1\"," ++
+    "\"schema\":\"tre-airlock/v2\"," ++
     "\"status\":\"released\"," ++
     "\"policy\":{\"min_cell\":" ++ toString Γ.minCell ++
       ",\"round_to\":" ++ toString Γ.roundTo ++ "}," ++
-    "\"study_id\":" ++ quoted c.studyId.val ++ "," ++
     "\"subject_id\":" ++ quoted c.subject.render ++ "," ++
     "\"total\":" ++ quoted (renderTotal Γ c.total) ++ "," ++
     "\"breakdown\":" ++ renderBreakdown c.breakdown ++

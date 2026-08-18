@@ -93,9 +93,10 @@ def test_batch_goes_through_release_gate_and_audit(batch_dataset):
     assert (results / "batch_release_candidate.json").exists()  # authorized release object staged
     assert (results / "batch_airlock_manifest.json").exists()
     assert (results / "batch_feasibility_summary.txt").exists()  # INTERNAL analyst note
-    assert (results / "airlock_pending" / "release.json").exists()  # Lean-emitted payload
-    assert not (results / "airlock_pending" / "batch_feasibility_summary.txt").exists()
-    assert (results / "airlock_pending" / "batch_airlock_manifest.json").exists()
+    # the egress-pending area holds ONLY the committed generation: payload + receipt. The
+    # manifest embeds the study id and stays in results/ as INTERNAL review evidence.
+    staged = sorted(f.name for f in (results / "airlock_pending").iterdir())
+    assert staged == ["release.json", "release.ready"]
     assert bundle["release_candidate"].study_id == "BATCH"
     assert bundle["release_candidate"].reported_cells == ()
     manifest = bundle["airlock_manifest"]

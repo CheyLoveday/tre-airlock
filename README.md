@@ -43,19 +43,25 @@ trusted Policy Γ (platform record) ──────┘      Policy.Valid Γ �
 For this one closed aggregate type, under the platform-authorised policy, the completed system
 establishes two distinct guarantees. **Formal (Lean-checked):** the runtime checks the release
 predicate over a **value-closed release language** — breakdown labels are a finite inductive
-vocabulary, the subject is a parsed CPRA reference, the study id is a charset- and length-capped
-refined type, counts and cardinalities are bounded — so free text cannot inhabit the released
-representation; success is represented by a proof-carrying `AirlockExport`; refusal cannot
-construct one, so no canonical bytes exist; malformed or out-of-language inputs fail closed.
+vocabulary, the subject is a parsed CPRA reference, counts and cardinalities are bounded, and
+the released representation carries **no free-form string field** (v2 removed `study_id`
+entirely; study identity stays in internal evidence) — so neither prose nor identifier-shaped
+text can inhabit the released payload; the residual representational capacity (the numerical
+values and CPRA components themselves) is stated, not hidden. Success is represented by a
+proof-carrying `AirlockExport`; refusal cannot construct one, so no canonical bytes exist;
+malformed or out-of-language inputs fail closed.
 **Effect-binding (operational):** the trusted policy Γ is a platform-owned deployment record
 (`platform/release_policy.json`) — the analysis config, the candidate, and the environment
 cannot select or alter it; one platform-bound, digest-attested executable adjudicates (with an
 optional mandatory digest pin in the policy record); publication is a committed-generation
 transaction — a refused or failed attempt leaves no committed generation, and a successful one
 atomically publishes the exact emitted bytes under a `release.ready` receipt binding
-policy → request → executable → payload digests; `ofh-feasibility audit verify` verifies the
-artefacts against the receipt and replays the attested adjudicator over the retained request
-preimage. The effect-binding half is disciplined, statically-guarded, tested Python — the
+policy → request → executable → payload digests; `ofh-feasibility audit verify` verifies the artefacts against
+the receipt, requires the complete receipt to equal the Merkle-ledger-bound decision record,
+checks the platform policy record still matches, and replays the attested adjudicator over the
+retained request preimage. **Distribution:** the supported form is the source checkout (plus
+`make airlock` and the platform record) — no standalone wheel is published, because a pure-Python
+wheel cannot carry the native adjudicator or the platform policy. The effect-binding half is disciplined, statically-guarded, tested Python — the
 platform trust root, attested but not Lean-proved; in production it belongs in a separate
 platform-owned process. Build the adjudicator with `make airlock`; protocol + TCB:
 [`formal/AIRLOCK_RUNTIME.md`](formal/AIRLOCK_RUNTIME.md).

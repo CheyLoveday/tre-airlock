@@ -38,11 +38,10 @@ def test_only_the_bridge_publishes_the_canonical_payload():
     assert "write_bytes" not in _SOURCES["io.py"]
     for name, text in _SOURCES.items():
         for kind, args in re.findall(r"io\.write_(text|json|csv|parquet)\(([^)]*)\)", text):
-            if "AIRLOCK_PENDING" in args or "pending" in args.split(",")[-1]:
-                assert "MANIFEST" in args, (
-                    f"{name}: io.write_{kind}({args}) writes non-manifest content into the "
-                    "egress-pending area — the payload comes only from the Lean bridge"
-                )
+            assert "AIRLOCK_PENDING" not in args and "pending" not in args.split(",")[-1], (
+                f"{name}: io.write_{kind}({args}) targets the egress-pending area — it holds "
+                "ONLY the committed generation (release.json + release.ready) from the bridge"
+            )
 
 
 def test_adjudicator_cannot_be_substituted_by_environment_or_config():

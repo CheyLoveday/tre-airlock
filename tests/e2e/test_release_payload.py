@@ -83,7 +83,8 @@ def test_payload_is_the_released_aggregate(run):
     cfg, bundle, results = run
     body = json.loads((results / "airlock_pending" / "release.json").read_text())
     assert body["status"] == "released"
-    assert body["schema"] == "tre-airlock/v1"
+    assert body["schema"] == "tre-airlock/v2"
+    assert "study_id" not in body  # no free-form string field in the released payload
     assert body["policy"] == {"min_cell": cfg.sdc_min_cell, "round_to": cfg.sdc_round_to}
     assert body["total"] == bundle["release_candidate"].client_total
 

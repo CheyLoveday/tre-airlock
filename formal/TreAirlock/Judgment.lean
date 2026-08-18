@@ -105,14 +105,13 @@ example : ¬ Policy.Valid ⟨4, 5⟩ := by decide
 example : ¬ Policy.Valid ⟨10, 0⟩ := by decide
 example : ¬ Policy.Valid ⟨10, 6⟩ := by decide
 
-private def demoStudy : StudyId := ⟨"demo", by decide⟩
 private def demoSubject : Subject := ⟨[⟨"10", 119669928, "C", "G"⟩], by decide⟩
 
 private def demoShown70 : ReleaseCandidate :=
-  { studyId := demoStudy, subject := demoSubject, total := .shown 70, breakdown := .suppressed }
+  { subject := demoSubject, total := .shown 70, breakdown := .suppressed }
 
 private def demoBypass : ReleaseCandidate :=
-  { studyId := demoStudy, subject := demoSubject, total := .shown 70
+  { subject := demoSubject, total := .shown 70
     breakdown := .shown [⟨.arrayDirectHighConfidence, 70⟩, ⟨.imputedSupportedConditional, 2⟩] }
 
 example : ReleaseOK ⟨10, 5⟩ demoShown70 := by decide

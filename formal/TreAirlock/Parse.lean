@@ -13,7 +13,7 @@ namespace TreAirlock
 
 open Lean
 
-def schemaVersion : String := "tre-airlock/v1"
+def schemaVersion : String := "tre-airlock/v2"
 
 /-- Object keys must be exactly `expected` (order irrelevant). -/
 def expectKeys (obj : Std.TreeMap.Raw String Json compare) (expected : List String) :
@@ -93,12 +93,6 @@ def parseBreakdown (j : Json) : Except String Breakdown := do
   | other =>
       throw s!"unknown breakdown tag: {other}"
 
-def parseStudyId (s : String) : Except String StudyId :=
-  if h : ValidStudyId s = true then
-    pure ⟨s, h⟩
-  else
-    throw s!"invalid study_id (1-{maxStudyIdLen} chars of [A-Za-z0-9._-]): {s}"
-
 def parseCpra (s : String) : Except String Cpra := do
   match s.splitOn ":" with
   | [chrom, posStr, refA, altA] =>
@@ -125,13 +119,11 @@ def parseSubject (s : String) : Except String Subject := do
 
 def parseCandidate (j : Json) : Except String ReleaseCandidate := do
   let obj ← asObj j
-  expectKeys obj ["study_id", "subject_id", "total", "breakdown"]
-  let studyId ← parseStudyId (← (← field obj "study_id").getStr?)
+  expectKeys obj ["subject_id", "total", "breakdown"]
   let subject ← parseSubject (← (← field obj "subject_id").getStr?)
   let total ← parseTotal (← field obj "total")
   let breakdown ← parseBreakdown (← field obj "breakdown")
   pure {
-    studyId := studyId
     subject := subject
     total := total
     breakdown := breakdown

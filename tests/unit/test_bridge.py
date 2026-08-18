@@ -1,6 +1,6 @@
 """Unit tests: the strict request builder + the trusted policy/adjudicator bindings.
 
-`airlock.build_airlock_request` serialises a candidate into the strict `tre-airlock/v1` request
+`airlock.build_airlock_request` serialises a candidate into the strict `tre-airlock/v2` request
 under the PLATFORM-authorised policy (never the analysis config or the candidate), mirroring the
 Lean parser's closed value language: approved label vocabulary, charset/length-capped study id,
 parsed CPRA subject, bounded counts. The bridge binds release authority to one platform-owned
@@ -50,7 +50,7 @@ def _candidate(**over):
 
 def test_shown_total_maps_structurally():
     req = airlock.build_airlock_request(_candidate(client_total="~70"), _policy())
-    assert req["schema"] == "tre-airlock/v1"
+    assert req["schema"] == "tre-airlock/v2"
     assert req["candidate"]["total"] == {"tag": "shown", "n": 70}
     assert req["candidate"]["breakdown"] == {"tag": "suppressed"}
 
@@ -92,10 +92,14 @@ def test_out_of_language_subjects_fail_fast(subject):
         airlock.build_airlock_request(_candidate(cpra=subject), _policy())
 
 
-@pytest.mark.parametrize("study", ["", "PERSON ALPHA", "x" * 65, "tab\tchar", "unicode-é"])
-def test_out_of_language_study_ids_fail_fast(study):
-    with pytest.raises(ValueError, match="study_id"):
-        airlock.build_airlock_request(_candidate(study_id=study), _policy())
+def test_study_id_never_reaches_the_wire():
+    # v2: the released representation carries no free-form string field — study identity is
+    # INTERNAL evidence only, whatever the candidate's study_id contains.
+    req = airlock.build_airlock_request(
+        _candidate(study_id="PERSON-ALPHA-CONFIDENTIAL-DATA"), _policy()
+    )
+    assert "study_id" not in req["candidate"]
+    assert "PERSON-ALPHA-CONFIDENTIAL-DATA" not in str(req)
 
 
 def test_shown_breakdown_maps_cells_in_order():

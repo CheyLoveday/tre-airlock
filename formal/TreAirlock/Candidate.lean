@@ -2,13 +2,14 @@
 Closed aggregate release candidate — closed at the VALUE level, not just the field level.
 
 Policy is *not* a field — `Γ` is supplied separately so the analysis cannot choose the rule it
-is judged by. Free text cannot inhabit the released representation: breakdown labels are a
-finite inductive vocabulary, the study reference is a bounded charset-refined subtype, and the
-subject is a parsed list of CPRA variant references. Counts and list lengths are capped at the
+is judged by. The released representation carries NO free-form string field: breakdown labels
+are a finite inductive vocabulary and the subject is a parsed list of CPRA variant references
+(study identity stays in INTERNAL evidence only). Counts and list lengths are capped at the
 parser. Display tokens such as `<10` / `~70` are created by the renderer, not stored here.
 
-This closes the direct textual channels (issue: second-review blocker 2). It does not claim to
-close numerical steganography or upstream derivation soundness — see `applySDC_sound` (post-MVP).
+Residual representational capacity — stated, not hidden: the numerical values themselves and
+the CPRA components remain information-bearing; numerical steganography and upstream derivation
+soundness are out of scope — see `applySDC_sound` (post-MVP).
 -/
 
 namespace TreAirlock
@@ -35,22 +36,7 @@ def maxCount : Nat := 1000000000
 def maxPos : Nat := 1000000000000
 def maxCells : Nat := 16
 def maxSubjectVariants : Nat := 16
-def maxStudyIdLen : Nat := 64
 def maxAlleleLen : Nat := 64
-
-def validIdChar (c : Char) : Bool :=
-  ('A' ≤ c && c ≤ 'Z') || ('a' ≤ c && c ≤ 'z') || ('0' ≤ c && c ≤ '9') ||
-  c == '-' || c == '_' || c == '.'
-
-/-- Non-empty, length-capped, charset-restricted identifier (no spaces, no control characters,
-no non-ASCII): the only free-form-ish field, and it cannot carry arbitrary text. -/
-def ValidStudyId (s : String) : Bool :=
-  !s.isEmpty && s.length ≤ maxStudyIdLen && s.toList.all validIdChar
-
-/-- Refined study reference: an invalid string cannot inhabit the type. -/
-abbrev StudyId := {s : String // ValidStudyId s = true}
-
-instance : Repr StudyId := ⟨fun s n => reprPrec s.val n⟩
 
 /-- The finite canonical chromosome vocabulary (no leading zeros by construction). -/
 def chromNames : List String :=
@@ -108,9 +94,10 @@ inductive Breakdown where
   | shown (cells : List Cell)
 deriving Repr, DecidableEq, Inhabited
 
-/-- Aggregate-only proposal over the closed value language. -/
+/-- Aggregate-only proposal over the closed value language. The candidate carries NO free-form
+string field: study identity lives in the INTERNAL evidence (audit events, manifests), never in
+the released representation. -/
 structure ReleaseCandidate where
-  studyId : StudyId
   subject : Subject
   total : ReleasedTotal
   breakdown : Breakdown

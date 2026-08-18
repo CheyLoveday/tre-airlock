@@ -2,19 +2,24 @@
 # `lake build` green == proven; red == a proof obligation cannot be discharged) and runs the
 # conformance suite (retained battery + generated Python/Lean differential + runtime CLI contract).
 #
-# Lean is the RUNTIME release authority in this POC (bridge.authorize invokes the adjudicator on
-# the actual egress path). Honesty note: the airlock binary is a proposed platform-level TRE
-# component, not an analyst package — it is not on (and does not belong on) the OFH package
-# allowlist, which governs analyst-installable Python packages.
+# Lean is the RUNTIME release authority in this POC (bridge invokes the adjudicator on the actual
+# egress path). Honesty note: the airlock binary is a proposed platform-level TRE component, not
+# an analyst package — package allowlists govern analyst-installable Python packages only.
 name: Lean (formal release gate)
 
 on: [push, pull_request]
+
+permissions:
+  contents: read
+
+env:
+  UV_LOCKED: "1"
 
 jobs:
   lean-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install elan (Lean toolchain manager)
         run: |
           curl -fsSL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
@@ -22,9 +27,11 @@ jobs:
       - name: lake build (proves the release-gate invariants)
         working-directory: formal
         run: lake build
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
-      - name: Conformance — precursor lockstep + Step A airlock CLI
+      - name: Lockfile unchanged by the gate
+        run: git diff --exit-code -- uv.lock pyproject.toml
+      - name: Conformance — precursor lockstep + runtime airlock contract + generated differential
         run: uv run pytest tests/conformance -v

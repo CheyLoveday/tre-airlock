@@ -6,6 +6,41 @@ All notable changes are documented here. Format: Keep a Changelog; versioning: S
 
 _Nothing yet._
 
+## [0.1.1] - 2026-08-18
+
+Corrections from the v0.1.0 release review. The core calculus is unchanged.
+
+### Changed (release language: `tre-airlock/v2`)
+- `study_id` is REMOVED from the released representation (request and payload; schema bumped to
+  `tre-airlock/v2` so retained v1 preimages fail replay loudly, not silently). The bounded
+  `[A-Za-z0-9._-]{1,64}` study field was syntactically restricted but still an identifier-shaped
+  information channel (`NHS1234567890` inhabited it); the released payload now carries no
+  free-form string field at all. Study identity lives in INTERNAL evidence (audit events,
+  manifests) only. Claim wording corrected accordingly: the residual representational capacity
+  (numerical values, CPRA components) is stated, not hidden.
+
+### Fixed (verification completeness)
+- `verify_release_generation` now binds the COMPLETE receipt to the ledger: the receipt must
+  canonically equal the Merkle-ledger-bound decision record, so mutating ANY receipt field
+  (policy identity, adjudicator path/kind, retained-path, canonical-path, schema) fails —
+  previously only the payload/request digests were compared. The verifier also recomputes the
+  Merkle root itself (self-sufficient; no longer relies on the CLI's separate ledger check) and
+  verifies the platform policy record on disk (digest, id, version) is the one that authorised
+  the generation. Per-field mutation battery added.
+
+### Changed (distribution boundary + release engineering)
+- Source-distributed POC made explicit: no wheel/sdist release assets (a `py3-none-any` wheel
+  cannot carry the native Lean adjudicator or the platform policy record, so an installed wheel
+  could never release; the v0.1.0 wheel/sdist assets are withdrawn). The supported form is the
+  source checkout + `make airlock` + `platform/`.
+- Release workflow split into a read-only gate job and a write-scoped publish job; all GitHub
+  Actions pinned to full commit SHAs; every workflow runs `uv` with `UV_LOCKED=1` and asserts
+  `git diff --exit-code -- uv.lock pyproject.toml`; CI now tests the full declared
+  `requires-python` range (3.11 / 3.12 / 3.13).
+- Adjudicator-pin wording corrected: with `adjudicator_sha256: null` (this repo's per-host
+  build) the executable is path-bound and MEASURED, not cryptographically authenticated;
+  deployments must supply the pin and reject null in production.
+
 ## [0.1.0] - 2026-08-17
 
 **First public release**: the complete TRE-airlock MVP — an executable Lean 4 adjudicator
@@ -19,12 +54,15 @@ reviewed in the private development repository and ships publicly for the first 
   and audit record). The analysis config no longer supplies the policy the airlock judges under;
   a candidate whose declared SDC fields disagree with the authorised policy refuses before
   adjudication. `Policy.Valid` (Lean) and policy authorisation (platform) are distinct, and the
-  mandatory adjudicator digest pin moved into the same platform record.
+  adjudicator digest pin slot moved into the same platform record (enforced when set; the POC
+  record ships null — measured, not authenticated; see 0.1.1).
 - **Value-closed release language (Lean):** breakdown labels are a finite inductive vocabulary,
   the subject is a parsed (multi-)CPRA reference, the study id is a charset/length-refined
-  subtype, counts and list cardinalities are parser-capped — identifier-shaped or free-text
-  content can no longer inhabit the released representation (adversarially tested with
+  subtype, counts and list cardinalities are parser-capped (adversarially tested with
   identifier-shaped values, control characters, over-cap payloads, and unknown labels).
+  _(Superseded wording: this entry originally claimed identifier-shaped content could no longer
+  inhabit the released representation — the bounded study field was still an identifier channel;
+  0.1.1 removed it entirely. See 0.1.1.)_
 - **Committed release generations:** all four egress sites run inside one
   `bridge.release_transaction` — O_EXCL attempt lock, prior-generation rotation, adjudication,
   uncommitted payload placement, internal artefacts + audit event, then the `release.ready`
@@ -64,7 +102,8 @@ reviewed in the private development repository and ships publicly for the first 
 ### Added (TRE-airlock MVP — runtime Lean release authority)
 - The executable Lean 4 airlock (`formal/TreAirlock`) is now the RUNTIME release authority: every
   release path (single-variant orchestrate + staged report, final post-phenotype, batch) maps its
-  aggregate candidate into a strict `tre-airlock/v1` request (`airlock.build_airlock_request` —
+  aggregate candidate into a strict `tre-airlock/v1` request (schema now v2 — see 0.1.1)
+  (`airlock.build_airlock_request` —
   policy never from the candidate; superseded detail: the second-review entry above moves the
   policy source from the analysis config to the platform record; malformed tokens, negative counts, duplicate
   labels, and suppressed-breakdown-with-cells fail fast), adjudicates via the new mechanical
